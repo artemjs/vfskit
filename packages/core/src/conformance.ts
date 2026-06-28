@@ -1,163 +1,88 @@
-import { describe, it, expect } from 'vitest'
 import type { VFS } from './types'
 import { toText } from './bytes'
 import { isVfsError } from './errors'
 
+function fail(m: string): never { throw new Error('conformance: ' + m) }
+function ok(v: unknown, m = 'expected truthy') { if (!v) fail(m) }
+function eq(a: unknown, b: unknown, m?: string) { if (a !== b) fail(m ?? `expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`) }
+async function code(fn: () => Promise<unknown>, c: string) {
+  let e: unknown
+  try { await fn() } catch (x) { e = x }
+  ok(isVfsError(e) && e.code === c, `expected error ${c}, got ${isVfsError(e) ? e.code : e}`)
+}
+async function throws(fn: () => Promise<unknown>) {
+  let e: unknown
+  try { await fn() } catch (x) { e = x }
+  ok(e, 'expected throw')
+}
+
+export interface ConformanceCase { name: string; run(make: () => VFS): Promise<void> }
+
+export const conformanceCases: ConformanceCase[] = [
+  { name: 'writes and reads a file', async run(make) {
+    const fs = make(); await fs.write('/a.txt', 'hello'); eq(toText(await fs.read('/a.txt')), 'hello') } },
+  { name: 'reports existence', async run(make) {
+    const fs = make(); eq(await fs.exists('/a.txt'), false); await fs.write('/a.txt', 'x'); eq(await fs.exists('/a.txt'), true) } },
+  { name: 'stats a file', async run(make) {
+    const fs = make(); await fs.write('/a.txt', 'hello'); const s = await fs.stat('/a.txt'); eq(s.type, 'file'); ok(s.size > 0) } },
+  { name: 'throws NOT_FOUND for missing read', async run(make) {
+    const fs = make(); await code(() => fs.read('/nope'), 'NOT_FOUND') } },
+  { name: 'lists directory children', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.write('/d/a', '1'); await fs.write('/d/b', '2')
+    eq((await fs.list('/d')).map((e) => e.name).sort().join(','), 'a,b') } },
+  { name: 'lists recursively', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.mkdir('/d/sub'); await fs.write('/d/sub/a', '1')
+    ok((await fs.list('/d', { recursive: true })).some((e) => e.path === '/d/sub/a')) } },
+  { name: 'removes a file', async run(make) {
+    const fs = make(); await fs.write('/a', '1'); await fs.remove('/a'); eq(await fs.exists('/a'), false) } },
+  { name: 'requires recursive to remove a non-empty dir', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.write('/d/a', '1')
+    await throws(() => fs.remove('/d')); await fs.remove('/d', { recursive: true }); eq(await fs.exists('/d'), false) } },
+  { name: 'moves a file', async run(make) {
+    const fs = make(); await fs.write('/a', '1'); await fs.move('/a', '/b')
+    eq(await fs.exists('/a'), false); eq(toText(await fs.read('/b')), '1') } },
+  { name: 'copies a file', async run(make) {
+    const fs = make(); await fs.write('/a', '1'); await fs.copy('/a', '/b')
+    eq(toText(await fs.read('/a')), '1'); eq(toText(await fs.read('/b')), '1') } },
+  { name: 'stores and reads metadata', async run(make) {
+    const fs = make(); await fs.write('/a', '1', { meta: { tag: 'x' } }); eq((await fs.getMeta('/a')).tag, 'x')
+    await fs.setMeta('/a', { tag: 'y' }); eq((await fs.getMeta('/a')).tag, 'y') } },
+  { name: 'emits watch events when supported', async run(make) {
+    const fs = make(); if (!fs.capabilities().watch) return
+    const events: string[] = []; const off = fs.watch('/', (e) => events.push(e.type + ':' + e.path))
+    await fs.write('/a', '1'); off(); ok(events.includes('create:/a')) } },
+  { name: 'moves a directory subtree', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.mkdir('/d/sub'); await fs.write('/d/sub/a', '1')
+    await fs.move('/d', '/e'); eq(await fs.exists('/d'), false); eq(toText(await fs.read('/e/sub/a')), '1') } },
+  { name: 'copies a directory subtree deeply', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.write('/d/a', '1'); await fs.copy('/d', '/e')
+    await fs.write('/e/a', '2'); eq(toText(await fs.read('/d/a')), '1'); eq(toText(await fs.read('/e/a')), '2') } },
+  { name: 'isolates returned read buffers from the store', async run(make) {
+    const fs = make(); await fs.write('/a', 'abc'); const buf = await fs.read('/a'); buf[0] = 0
+    eq(toText(await fs.read('/a')), 'abc') } },
+  { name: 'does not confuse sibling prefixes', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.mkdir('/dx'); await fs.write('/dx/a', '1')
+    ok(!(await fs.list('/d')).some((e) => e.name === 'a')) } },
+  { name: 'reports byte size matching written content', async run(make) {
+    const fs = make(); await fs.write('/a', 'hello'); eq((await fs.stat('/a')).size, 5) } },
+  { name: 'throws ALREADY_EXISTS creating an existing dir without recursive', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await code(() => fs.mkdir('/d'), 'ALREADY_EXISTS') } },
+  { name: 'preserves metadata when overwriting content without new meta', async run(make) {
+    const fs = make(); await fs.write('/a', '1', { meta: { tag: 'x' } }); await fs.write('/a', '2')
+    eq((await fs.getMeta('/a')).tag, 'x') } },
+  { name: 'throws NOT_A_DIRECTORY creating a directory under a file', async run(make) {
+    const fs = make(); await fs.write('/f', '1'); await code(() => fs.mkdir('/f/sub', { recursive: true }), 'NOT_A_DIRECTORY') } },
+  { name: 'throws ALREADY_EXISTS moving or copying onto an existing path', async run(make) {
+    const fs = make(); await fs.write('/a', '1'); await fs.write('/b', '2')
+    await code(() => fs.move('/a', '/b'), 'ALREADY_EXISTS'); await code(() => fs.copy('/a', '/b'), 'ALREADY_EXISTS') } },
+]
+
 export function runConformance(make: () => VFS): void {
-  describe('vfs conformance', () => {
-    it('writes and reads a file', async () => {
-      const fs = make()
-      await fs.write('/a.txt', 'hello')
-      expect(toText(await fs.read('/a.txt'))).toBe('hello')
-    })
-    it('reports existence', async () => {
-      const fs = make()
-      expect(await fs.exists('/a.txt')).toBe(false)
-      await fs.write('/a.txt', 'x')
-      expect(await fs.exists('/a.txt')).toBe(true)
-    })
-    it('stats a file', async () => {
-      const fs = make()
-      await fs.write('/a.txt', 'hello')
-      const s = await fs.stat('/a.txt')
-      expect(s.type).toBe('file')
-      expect(s.size).toBeGreaterThan(0)
-    })
-    it('throws NOT_FOUND for missing read', async () => {
-      const fs = make()
-      let err: unknown
-      try { await fs.read('/nope') } catch (e) { err = e }
-      expect(isVfsError(err) && err.code).toBe('NOT_FOUND')
-    })
-    it('lists directory children', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      await fs.write('/d/a', '1')
-      await fs.write('/d/b', '2')
-      const names = (await fs.list('/d')).map((e) => e.name).sort()
-      expect(names).toEqual(['a', 'b'])
-    })
-    it('lists recursively', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      await fs.mkdir('/d/sub')
-      await fs.write('/d/sub/a', '1')
-      const paths = (await fs.list('/d', { recursive: true })).map((e) => e.path).sort()
-      expect(paths).toContain('/d/sub/a')
-    })
-    it('removes a file', async () => {
-      const fs = make()
-      await fs.write('/a', '1')
-      await fs.remove('/a')
-      expect(await fs.exists('/a')).toBe(false)
-    })
-    it('requires recursive to remove a non-empty dir', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      await fs.write('/d/a', '1')
-      let err: unknown
-      try { await fs.remove('/d') } catch (e) { err = e }
-      expect(err).toBeTruthy()
-      await fs.remove('/d', { recursive: true })
-      expect(await fs.exists('/d')).toBe(false)
-    })
-    it('moves a file', async () => {
-      const fs = make()
-      await fs.write('/a', '1')
-      await fs.move('/a', '/b')
-      expect(await fs.exists('/a')).toBe(false)
-      expect(toText(await fs.read('/b'))).toBe('1')
-    })
-    it('copies a file', async () => {
-      const fs = make()
-      await fs.write('/a', '1')
-      await fs.copy('/a', '/b')
-      expect(toText(await fs.read('/a'))).toBe('1')
-      expect(toText(await fs.read('/b'))).toBe('1')
-    })
-    it('stores and reads metadata', async () => {
-      const fs = make()
-      await fs.write('/a', '1', { meta: { tag: 'x' } })
-      expect((await fs.getMeta('/a')).tag).toBe('x')
-      await fs.setMeta('/a', { tag: 'y' })
-      expect((await fs.getMeta('/a')).tag).toBe('y')
-    })
-    it('emits watch events when supported', async () => {
-      const fs = make()
-      if (!fs.capabilities().watch) return
-      const events: string[] = []
-      const off = fs.watch('/', (e) => events.push(e.type + ':' + e.path))
-      await fs.write('/a', '1')
-      off()
-      expect(events).toContain('create:/a')
-    })
-    it('moves a directory subtree', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      await fs.mkdir('/d/sub')
-      await fs.write('/d/sub/a', '1')
-      await fs.move('/d', '/e')
-      expect(await fs.exists('/d')).toBe(false)
-      expect(toText(await fs.read('/e/sub/a'))).toBe('1')
-    })
-    it('copies a directory subtree deeply', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      await fs.write('/d/a', '1')
-      await fs.copy('/d', '/e')
-      await fs.write('/e/a', '2')
-      expect(toText(await fs.read('/d/a'))).toBe('1')
-      expect(toText(await fs.read('/e/a'))).toBe('2')
-    })
-    it('isolates returned read buffers from the store', async () => {
-      const fs = make()
-      await fs.write('/a', 'abc')
-      const buf = await fs.read('/a')
-      buf[0] = 0
-      expect(toText(await fs.read('/a'))).toBe('abc')
-    })
-    it('does not confuse sibling prefixes', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      await fs.mkdir('/dx')
-      await fs.write('/dx/a', '1')
-      expect((await fs.list('/d')).map((e) => e.name)).not.toContain('a')
-    })
-    it('reports byte size matching written content', async () => {
-      const fs = make()
-      await fs.write('/a', 'hello')
-      expect((await fs.stat('/a')).size).toBe(5)
-    })
-    it('throws ALREADY_EXISTS creating an existing dir without recursive', async () => {
-      const fs = make()
-      await fs.mkdir('/d')
-      let err: unknown
-      try { await fs.mkdir('/d') } catch (e) { err = e }
-      expect(isVfsError(err) && err.code).toBe('ALREADY_EXISTS')
-    })
-    it('preserves metadata when overwriting content without new meta', async () => {
-      const fs = make()
-      await fs.write('/a', '1', { meta: { tag: 'x' } })
-      await fs.write('/a', '2')
-      expect((await fs.getMeta('/a')).tag).toBe('x')
-    })
-    it('throws NOT_A_DIRECTORY creating a directory under a file', async () => {
-      const fs = make()
-      await fs.write('/f', '1')
-      let err: unknown
-      try { await fs.mkdir('/f/sub', { recursive: true }) } catch (e) { err = e }
-      expect(isVfsError(err) && err.code).toBe('NOT_A_DIRECTORY')
-    })
-    it('throws ALREADY_EXISTS moving or copying onto an existing path', async () => {
-      const fs = make()
-      await fs.write('/a', '1')
-      await fs.write('/b', '2')
-      let m: unknown
-      try { await fs.move('/a', '/b') } catch (e) { m = e }
-      expect(isVfsError(m) && m.code).toBe('ALREADY_EXISTS')
-      let c: unknown
-      try { await fs.copy('/a', '/b') } catch (e) { c = e }
-      expect(isVfsError(c) && c.code).toBe('ALREADY_EXISTS')
-    })
+  const g = globalThis as unknown as {
+    describe: (n: string, f: () => void) => void
+    it: (n: string, f: () => Promise<void>) => void
+  }
+  g.describe('vfs conformance', () => {
+    for (const c of conformanceCases) g.it(c.name, () => c.run(make))
   })
 }

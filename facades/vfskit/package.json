@@ -5,7 +5,10 @@
   "keywords": ["vfs", "filesystem", "fs", "s3", "storage", "abstraction", "virtual-file-system", "encryption", "remote", "adapter", "node"],
   "license": "MIT",
   "type": "module",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./conformance": { "types": "./dist/conformance.d.ts", "import": "./dist/conformance.js" }
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,

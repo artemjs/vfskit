@@ -5,7 +5,10 @@
   "keywords": ["vfs", "filesystem", "fs", "browser", "storage", "abstraction", "virtual-file-system", "encryption", "remote", "jsdelivr"],
   "license": "MIT",
   "type": "module",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./conformance": { "types": "./dist/conformance.d.ts", "import": "./dist/conformance.js" }
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

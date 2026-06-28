@@ -6,8 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "@vfskit/core/conformance": ["packages/core/src/conformance.ts"],
-      "@vfskit/*": ["packages/*/src/index.ts"]
+      "@vfskit/*": ["packages/*/src/index.ts"],
+      "vfskit/conformance": ["packages/core/src/conformance.ts"],
+      "vfskit": ["facades/vfskit/src/index.ts"]
     }
   },
-  "include": ["packages/*/src/**/*", "facades/*/src/**/*"]
+  "include": ["packages/*/src/**/*", "facades/*/src/**/*", "examples/*/src/**/*"]
 }

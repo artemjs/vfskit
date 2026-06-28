@@ -7,9 +7,12 @@ export type ErrorCode =
   | 'UNSUPPORTED'
   | 'IO'
 
+export const BRAND: unique symbol = Symbol.for('vfskit.VfsError')
+
 export class VfsError extends Error {
   code: ErrorCode
   path?: string
+  readonly [BRAND] = true
   constructor(code: ErrorCode, message: string, path?: string) {
     super(message)
     this.name = 'VfsError'
@@ -27,5 +30,5 @@ export const unsupported = (op: string) => new VfsError('UNSUPPORTED', `unsuppor
 export const io = (message: string, path?: string) => new VfsError('IO', message, path)
 
 export function isVfsError(e: unknown): e is VfsError {
-  return e instanceof VfsError
+  return typeof e === 'object' && e !== null && (e as Record<symbol, unknown>)[BRAND] === true
 }

@@ -84,6 +84,41 @@ await fs.write('/hello.txt', 'hi')
 
 Every adapter passes the same conformance suite, so a new one "just works" once it does too.
 
+## Bring your own storage
+
+vfskit is just an interface. To put *any* backend behind the same API, write a function that
+returns a `VFS` - a plain object literal implementing the methods above - over your store
+(a database, a KV cache, `localStorage`, a blob service, whatever):
+
+```ts
+import { type VFS, normalize, toBytes, notFound } from 'vfskit'
+
+export function myVfs(store: MyStore): VFS {
+  return {
+    capabilities: () => ({ streaming: false, watch: false, atomicMove: false, nativeMeta: true, randomAccess: false }),
+    async read(path) { /* ... */ },
+    async write(path, data, opts) { /* ... */ },
+    // ...the rest of the interface
+  }
+}
+```
+
+Then validate it against the exact same battery every built-in adapter must pass:
+
+```ts
+import { conformanceCases } from 'vfskit/conformance'
+import { describe, it } from 'vitest'
+
+describe('my adapter', () => {
+  for (const c of conformanceCases) it(c.name, () => c.run(() => myVfs(new MyStore())))
+})
+```
+
+If it passes, your storage now works everywhere vfskit works - behind `encrypt(...)`, behind
+`serve(...)`, driven by a browser `remote(...)`. A complete worked example (a key-value
+backend) lives in `examples/custom-adapter`. `conformanceCases` is framework-agnostic
+(`{ name, run(makeVfs) }[]`), so you can drive it from any test runner.
+
 ## Encryption
 
 AES-256-GCM via WebCrypto. A raw key, or a passphrase derived per file with PBKDF2 (random
