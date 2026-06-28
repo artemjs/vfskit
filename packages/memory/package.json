@@ -2,6 +2,15 @@
   "name": "@vfskit/memory",
   "version": "0.0.0",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@vfskit/core": "0.0.0" }
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@vfskit/core": "0.0.0"
+  },
+  "private": true,
+  "types": "./dist/index.d.ts"
 }

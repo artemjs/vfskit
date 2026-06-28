@@ -1,0 +1,35 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/core/tsconfig.build.json"
+    },
+    {
+      "path": "packages/rpc/tsconfig.build.json"
+    },
+    {
+      "path": "packages/memory/tsconfig.build.json"
+    },
+    {
+      "path": "packages/encrypt/tsconfig.build.json"
+    },
+    {
+      "path": "packages/node-fs/tsconfig.build.json"
+    },
+    {
+      "path": "packages/s3/tsconfig.build.json"
+    },
+    {
+      "path": "packages/server/tsconfig.build.json"
+    },
+    {
+      "path": "packages/remote/tsconfig.build.json"
+    },
+    {
+      "path": "packages/transport-http/tsconfig.build.json"
+    },
+    {
+      "path": "packages/transport-ws/tsconfig.build.json"
+    }
+  ]
+}

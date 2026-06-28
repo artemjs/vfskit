@@ -3,8 +3,18 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./conformance": "./src/conformance.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./conformance": {
+      "types": "./dist/conformance.d.ts",
+      "default": "./src/conformance.ts"
+    }
   },
-  "peerDependencies": { "vitest": "^3.0.0" }
+  "peerDependencies": {
+    "vitest": "^3.0.0"
+  },
+  "private": true,
+  "types": "./dist/index.d.ts"
 }

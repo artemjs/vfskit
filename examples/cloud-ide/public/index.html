@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>vfskit cloud-ide</title>
+<style>html,body,#ed{height:100%;margin:0}</style>
+</head>
+<body>
+<div id="ed"></div>
+<script type="module">
+import { remote, wsTransport, toText, toBytes } from 'https://cdn.jsdelivr.net/npm/vfskit-front/+esm'
+import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor/+esm'
+
+const fs = remote(wsTransport(`ws://${location.host}/?user=demo`))
+const path = '/main.js'
+let value = '// new file\n'
+try { value = toText(await fs.read(path)) } catch {}
+
+const ed = monaco.editor.create(document.getElementById('ed'), { value, language: 'javascript', automaticLayout: true })
+let t
+ed.onDidChangeModelContent(() => { clearTimeout(t); t = setTimeout(() => fs.write(path, toBytes(ed.getValue())), 400) })
+</script>
+</body>
+</html>

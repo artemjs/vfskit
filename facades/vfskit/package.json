@@ -1,0 +1,28 @@
+{
+  "name": "vfskit",
+  "version": "1.0.0",
+  "description": "Universal abstraction over any virtual file system - memory, disk, S3 and more - with composable adapters, encryption and a remote bridge. Backend kit.",
+  "keywords": ["vfs", "filesystem", "fs", "s3", "storage", "abstraction", "virtual-file-system", "encryption", "remote", "adapter", "node"],
+  "license": "MIT",
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": ["dist", "README.md"],
+  "repository": { "type": "git", "url": "git+https://github.com/vfskit/vfskit.git" },
+  "homepage": "https://github.com/vfskit/vfskit#readme",
+  "scripts": { "build": "tsup" },
+  "devDependencies": {
+    "@vfskit/core": "*",
+    "@vfskit/memory": "*",
+    "@vfskit/node-fs": "*",
+    "@vfskit/s3": "*",
+    "@vfskit/encrypt": "*",
+    "@vfskit/server": "*",
+    "@vfskit/remote": "*",
+    "@vfskit/transport-http": "*",
+    "@vfskit/transport-ws": "*",
+    "tsup": "^8.3.0"
+  }
+}
