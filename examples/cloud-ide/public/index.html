@@ -8,7 +8,7 @@
 <body>
 <div id="ed"></div>
 <script type="module">
-import { remote, wsTransport, toText, toBytes } from 'https://cdn.jsdelivr.net/npm/vfskit-front/+esm'
+import { remote, wsTransport, toText, toBytes } from 'https://cdn.jsdelivr.net/npm/@artemjs/vfskit-front/+esm'
 import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor/+esm'
 
 const fs = remote(wsTransport(`ws://${location.host}/?user=demo`))

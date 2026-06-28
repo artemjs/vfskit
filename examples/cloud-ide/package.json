@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": { "start": "node server.mjs" },
-  "dependencies": { "vfskit": "*", "ws": "^8.18.0" }
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "@artemjs/vfskit": "*"
+  }
 }

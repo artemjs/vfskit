@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { WebSocketServer } from 'ws'
-import { serve, nodeFs } from 'vfskit'
+import { serve, nodeFs } from '@artemjs/vfskit'
 
 const DATA = fileURLToPath(new URL('./data/', import.meta.url))
 const PUB = fileURLToPath(new URL('./public/', import.meta.url))

@@ -26,20 +26,20 @@ becomes a structured file system with files and metadata.
 
 It ships in two faces under one brand:
 
-- **`vfskit`** (npm, Node) - the full kit: core + memory + node-fs + s3 + encrypt + cache + serve + remote.
-- **`vfskit-front`** (npm + jsDelivr, browser) - core + memory + encrypt + cache + a remote client.
+- **`/vfskit`** (npm, Node) - the full kit: core + memory + node-fs + s3 + encrypt + cache + serve + remote.
+- **`/vfskit-front`** (npm + jsDelivr, browser) - core + memory + encrypt + cache + a remote client.
 
 Both expose **identical API names**, so your code looks the same on either side.
 
 ## Install
 
 ```sh
-npm i vfskit              # backend / Node
+npm i @artemjs/vfskit              # backend / Node
 ```
 
 ```js
 // browser, no build step
-import { remote, wsTransport } from 'https://cdn.jsdelivr.net/npm/vfskit-front/+esm'
+import { remote, wsTransport } from 'https://cdn.jsdelivr.net/npm/@artemjs/vfskit-front/+esm'
 ```
 
 ## Everything is a VFS
@@ -76,7 +76,7 @@ stores ciphertext.
 ## Quick start
 
 ```ts
-import { memory, nodeFs, encrypt, serve, remote, toText } from 'vfskit'
+import { memory, nodeFs, encrypt, serve, remote, toText } from '@artemjs/vfskit'
 
 const store = encrypt(nodeFs('./data'), { passphrase: 'hunter2' })
 await store.write('/notes/todo.md', '# buy milk', { meta: { tag: 'home' } })
@@ -93,7 +93,7 @@ const server = serve(nodeFs('./data'))
 
 ```ts
 // client (browser or Node)
-import { remote, wsTransport } from 'vfskit-front'
+import { remote, wsTransport } from '@artemjs/vfskit-front'
 const fs = remote(wsTransport('ws://localhost:3000'))
 await fs.write('/hello.txt', 'hi')
 ```
@@ -115,7 +115,7 @@ returns a `VFS` - a plain object literal implementing the methods above - over y
 (a database, a KV cache, `localStorage`, a blob service, whatever):
 
 ```ts
-import { type VFS, normalize, toBytes, notFound } from 'vfskit'
+import { type VFS, normalize, toBytes, notFound } from '@artemjs/vfskit'
 
 export function myVfs(store: MyStore): VFS {
   return {
@@ -130,7 +130,7 @@ export function myVfs(store: MyStore): VFS {
 Then validate it against the exact same battery every built-in adapter must pass:
 
 ```ts
-import { conformanceCases } from 'vfskit/conformance'
+import { conformanceCases } from '@artemjs/vfskit/conformance'
 import { describe, it } from 'vitest'
 
 describe('my adapter', () => {
@@ -160,7 +160,7 @@ subtree-invalidated on write/remove/move/copy). Wrap a `remote(...)` to avoid ro
 hot files:
 
 ```ts
-import { cache, remote, wsTransport } from 'vfskit-front'
+import { cache, remote, wsTransport } from '@artemjs/vfskit-front'
 const fs = cache(remote(wsTransport(url)), { ttlMs: 5000 })
 ```
 
@@ -187,7 +187,7 @@ Supported by `memory`, `nodeFs`, `s3`, and transparently over `remote(...)`.
 handles), buffered otherwise, so the API is uniform:
 
 ```ts
-import { readStream, writeStream, collect, toBytes } from 'vfskit'
+import { readStream, writeStream, collect, toBytes } from '@artemjs/vfskit'
 
 const w = (await writeStream(fs, '/big.log')).getWriter()
 await w.write(toBytes('line 1\n')); await w.close()

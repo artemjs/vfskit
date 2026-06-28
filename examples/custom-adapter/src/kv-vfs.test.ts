@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { conformanceCases } from 'vfskit/conformance'
+import { conformanceCases } from '@artemjs/vfskit/conformance'
 import { kvVfs, type Kv } from './kv-vfs'
 
 function makeKv(): Kv {

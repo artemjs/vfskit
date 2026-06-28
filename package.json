@@ -10,7 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
     "build:types": "tsc -b tsconfig.build.json",
-    "build": "npm run build:types && npm run build -w vfskit && npm run build -w vfskit-front"
+    "build": "npm run build:types && npm run build -w @artemjs/vfskit && npm run build -w @artemjs/vfskit-front"
   },
   "devDependencies": {
     "@types/node": "^26.0.1",

@@ -3,7 +3,7 @@ import {
   type ListOpts, type MkdirOpts, type RemoveOpts, type WriteOpts, type Unsubscribe,
   normalize, dirname, toBytes,
   notFound, alreadyExists, isADirectory, notADirectory, io,
-} from 'vfskit'
+} from '@artemjs/vfskit'
 
 export interface Kv {
   get(k: string): string | undefined

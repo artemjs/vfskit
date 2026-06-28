@@ -1,5 +1,5 @@
 {
-  "name": "vfskit-front",
+  "name": "@artemjs/vfskit-front",
   "version": "1.1.0",
   "description": "Universal VFS abstraction for the browser - in-memory + encryption + a remote client that drives any vfskit backend. Frontend kit, served via jsDelivr.",
   "keywords": [
@@ -53,5 +53,8 @@
     "@vfskit/transport-ws": "*",
     "tsup": "^8.3.0",
     "@vfskit/cache": "*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
