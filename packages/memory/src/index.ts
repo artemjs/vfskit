@@ -86,7 +86,9 @@ export function memory(): VFS {
         let cur = ''
         for (const part of p.split('/').filter(Boolean)) {
           cur += '/' + part
-          if (!nodes.has(cur)) { nodes.set(cur, { type: 'dir', meta: {}, mtime: t(), ctime: t() }); emit('create', cur) }
+          const ex = nodes.get(cur)
+          if (ex) { if (ex.type !== 'dir') throw notADirectory(cur); continue }
+          nodes.set(cur, { type: 'dir', meta: {}, mtime: t(), ctime: t() }); emit('create', cur)
         }
         return
       }
@@ -107,6 +109,7 @@ export function memory(): VFS {
       need(a)
       parentDir(b)
       if (nodes.has(b)) throw alreadyExists(b)
+      if (within(a, b)) throw io('cannot move into itself', b)
       for (const k of [...nodes.keys()].filter((k) => k === a || within(a, k))) {
         const node = nodes.get(k)!
         nodes.delete(k)

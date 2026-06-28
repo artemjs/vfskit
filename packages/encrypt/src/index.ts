@@ -1,4 +1,4 @@
-import { type VFS, type Capabilities, toBytes, concat } from '@vfskit/core'
+import { type VFS, type Capabilities, toBytes, concat, io } from '@vfskit/core'
 
 export interface EncryptOpts { key?: Uint8Array; passphrase?: string }
 
@@ -32,16 +32,26 @@ export function encrypt(inner: VFS, opts: EncryptOpts): VFS {
   return {
     ...inner,
     capabilities: () => caps,
+    async stat(path) {
+      const s = await inner.stat(path)
+      return s.type === 'file' ? { ...s, size: Math.max(0, s.size - 31) } : s
+    },
     async write(path, data, o) {
       const key = await keyP
       const iv = randomIv()
       const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, key, toBytes(data).slice()))
       await inner.write(path, concat([MAGIC, iv, ct]), o)
     },
-    async read(path) {
+    async read(path, o) {
       const key = await keyP
-      const raw = await inner.read(path)
-      const pt = await subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(3, 15) }, key, raw.slice(15))
+      const raw = await inner.read(path, o)
+      if (raw.length < 31 || raw[0] !== MAGIC[0] || raw[1] !== MAGIC[1] || raw[2] !== MAGIC[2]) throw io('invalid ciphertext', path)
+      let pt: ArrayBuffer
+      try {
+        pt = await subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(3, 15) }, key, raw.slice(15))
+      } catch {
+        throw io('decryption failed', path)
+      }
       return new Uint8Array(pt)
     },
   }

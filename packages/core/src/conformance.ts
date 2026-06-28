@@ -91,5 +91,49 @@ export function runConformance(make: () => VFS): void {
       off()
       expect(events).toContain('create:/a')
     })
+    it('moves a directory subtree', async () => {
+      const fs = make()
+      await fs.mkdir('/d')
+      await fs.mkdir('/d/sub')
+      await fs.write('/d/sub/a', '1')
+      await fs.move('/d', '/e')
+      expect(await fs.exists('/d')).toBe(false)
+      expect(toText(await fs.read('/e/sub/a'))).toBe('1')
+    })
+    it('copies a directory subtree deeply', async () => {
+      const fs = make()
+      await fs.mkdir('/d')
+      await fs.write('/d/a', '1')
+      await fs.copy('/d', '/e')
+      await fs.write('/e/a', '2')
+      expect(toText(await fs.read('/d/a'))).toBe('1')
+      expect(toText(await fs.read('/e/a'))).toBe('2')
+    })
+    it('isolates returned read buffers from the store', async () => {
+      const fs = make()
+      await fs.write('/a', 'abc')
+      const buf = await fs.read('/a')
+      buf[0] = 0
+      expect(toText(await fs.read('/a'))).toBe('abc')
+    })
+    it('does not confuse sibling prefixes', async () => {
+      const fs = make()
+      await fs.mkdir('/d')
+      await fs.mkdir('/dx')
+      await fs.write('/dx/a', '1')
+      expect((await fs.list('/d')).map((e) => e.name)).not.toContain('a')
+    })
+    it('reports byte size matching written content', async () => {
+      const fs = make()
+      await fs.write('/a', 'hello')
+      expect((await fs.stat('/a')).size).toBe(5)
+    })
+    it('throws ALREADY_EXISTS creating an existing dir without recursive', async () => {
+      const fs = make()
+      await fs.mkdir('/d')
+      let err: unknown
+      try { await fs.mkdir('/d') } catch (e) { err = e }
+      expect(isVfsError(err) && err.code).toBe('ALREADY_EXISTS')
+    })
   })
 }
