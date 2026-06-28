@@ -1,0 +1,10 @@
+{
+  "name": "@vfskit/cache",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./src/index.ts" } },
+  "types": "./dist/index.d.ts",
+  "dependencies": { "@vfskit/core": "0.0.0" },
+  "devDependencies": { "@vfskit/memory": "0.0.0" }
+}

@@ -1,6 +1,7 @@
 export * from '@vfskit/core'
 export { memory } from '@vfskit/memory'
 export { encrypt, type EncryptOpts } from '@vfskit/encrypt'
+export { cache, type CacheOpts, type CacheStore } from '@vfskit/cache'
 export { remote, type Transport, type RemoteOpts } from '@vfskit/remote'
 export { httpTransport, type FetchLike } from '@vfskit/transport-http'
 export { wsTransport, type SocketLike } from '@vfskit/transport-ws'

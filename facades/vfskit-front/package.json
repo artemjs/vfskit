@@ -2,22 +2,48 @@
   "name": "vfskit-front",
   "version": "1.0.0",
   "description": "Universal VFS abstraction for the browser - in-memory + encryption + a remote client that drives any vfskit backend. Frontend kit, served via jsDelivr.",
-  "keywords": ["vfs", "filesystem", "fs", "browser", "storage", "abstraction", "virtual-file-system", "encryption", "remote", "jsdelivr"],
+  "keywords": [
+    "vfs",
+    "filesystem",
+    "fs",
+    "browser",
+    "storage",
+    "abstraction",
+    "virtual-file-system",
+    "encryption",
+    "remote",
+    "jsdelivr"
+  ],
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./conformance": { "types": "./dist/conformance.d.ts", "import": "./dist/conformance.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./conformance": {
+      "types": "./dist/conformance.d.ts",
+      "import": "./dist/conformance.js"
+    }
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
-  "files": ["dist", "README.md"],
-  "repository": { "type": "git", "url": "git+https://github.com/artemjs/vfskit.git", "directory": "facades/vfskit-front" },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artemjs/vfskit.git",
+    "directory": "facades/vfskit-front"
+  },
   "bugs": "https://github.com/artemjs/vfskit/issues",
   "homepage": "https://github.com/artemjs/vfskit#readme",
-  "scripts": { "build": "tsup" },
+  "scripts": {
+    "build": "tsup"
+  },
   "devDependencies": {
     "@vfskit/core": "*",
     "@vfskit/memory": "*",
@@ -25,6 +51,7 @@
     "@vfskit/remote": "*",
     "@vfskit/transport-http": "*",
     "@vfskit/transport-ws": "*",
-    "tsup": "^8.3.0"
+    "tsup": "^8.3.0",
+    "@vfskit/cache": "*"
   }
 }

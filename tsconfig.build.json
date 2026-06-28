@@ -14,6 +14,9 @@
       "path": "packages/encrypt/tsconfig.build.json"
     },
     {
+      "path": "packages/cache/tsconfig.build.json"
+    },
+    {
       "path": "packages/node-fs/tsconfig.build.json"
     },
     {

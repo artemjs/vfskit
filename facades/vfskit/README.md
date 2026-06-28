@@ -129,6 +129,19 @@ default; metadata stays as the backend stores it.
 const vault = encrypt(memory(), { passphrase: 'open sesame' })
 ```
 
+## Caching
+
+`cache(vfs, { ttlMs? })` is a middleware that serves reads from an in-memory store
+(write-through, subtree-invalidated on write/remove/move/copy). Wrap a `remote(...)` to avoid
+round-trips for hot files:
+
+```ts
+import { cache, remote, wsTransport } from 'vfskit-front'
+const fs = cache(remote(wsTransport(url)), { ttlMs: 5000 })
+```
+
+Pass your own `store` to back the cache with anything (e.g. `localStorage`).
+
 ## Transports
 
 - `httpTransport(url)` - request/response; works on serverless/edge. No `watch`.
