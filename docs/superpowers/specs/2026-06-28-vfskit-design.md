@@ -1,4 +1,4 @@
-# vfskit — Design (v1)
+# vfskit - Design (v1)
 
 ## Summary
 
@@ -9,8 +9,8 @@ files, folders, and metadata the same way regardless of where data physically li
 
 The project ships in two faces under one brand:
 
-- **`vfskit`** (backend, npm) — the full kit: core + node-fs + s3 + server + remote + encrypt.
-- **`vfskit-front`** (frontend, jsDelivr ESM) — browser-safe subset: core + remote client +
+- **`vfskit`** (backend, npm) - the full kit: core + node-fs + s3 + server + remote + encrypt.
+- **`vfskit-front`** (frontend, jsDelivr ESM) - browser-safe subset: core + remote client +
   transports + encrypt.
 
 Both expose identical API names, so user code looks the same on either side. The frontend
@@ -38,11 +38,11 @@ end-to-end encryption where the server only ever sees ciphertext.
 
 Layered and composable:
 
-- **Core** — the `VFS` interface plus shared types, errors, path utilities, capabilities.
-- **Adapters** — implement `VFS` over a concrete backend: `Memory`, `NodeFS`, `S3`.
-- **Middleware decorators** — take a `VFS` and return a `VFS`. v1 ships `encrypt(vfs, opts)`.
+- **Core** - the `VFS` interface plus shared types, errors, path utilities, capabilities.
+- **Adapters** - implement `VFS` over a concrete backend: `Memory`, `NodeFS`, `S3`.
+- **Middleware decorators** - take a `VFS` and return a `VFS`. v1 ships `encrypt(vfs, opts)`.
   The shape leaves room for `cache` / `readonly` / `index` later.
-- **Bridge** — `serve(vfs)` exposes a `VFS` over a transport; `remote(transport)` returns a
+- **Bridge** - `serve(vfs)` exposes a `VFS` over a transport; `remote(transport)` returns a
   client `VFS` whose calls are serialized to the server.
 
 Composition examples:
@@ -59,14 +59,14 @@ await fs.write('/notes/todo.md', bytes)
 
 Internal scoped packages (npm workspaces):
 
-- `@vfskit/core` — interface, types, errors, path utils, capabilities, conformance suite.
-- `@vfskit/encrypt` — AES-GCM middleware.
-- `@vfskit/memory` — in-memory adapter (conformance reference).
-- `@vfskit/node-fs` — real disk adapter (node).
-- `@vfskit/s3` — S3 adapter (node).
-- `@vfskit/remote` — `remote()` client VFS.
-- `@vfskit/server` — `serve()` server handlers.
-- `@vfskit/transport-http`, `@vfskit/transport-ws` — transport implementations.
+- `@vfskit/core` - interface, types, errors, path utils, capabilities, conformance suite.
+- `@vfskit/encrypt` - AES-GCM middleware.
+- `@vfskit/memory` - in-memory adapter (conformance reference).
+- `@vfskit/node-fs` - real disk adapter (node).
+- `@vfskit/s3` - S3 adapter (node).
+- `@vfskit/remote` - `remote()` client VFS.
+- `@vfskit/server` - `serve()` server handlers.
+- `@vfskit/transport-http`, `@vfskit/transport-ws` - transport implementations.
 
 Public facades (what users install), branded as one `vfskit`:
 
@@ -126,7 +126,7 @@ is considered correct. The suite skips checks for capabilities an adapter doesn'
 - **Tamper detection**: GCM auth tag fails closed; a bad envelope or failed decrypt raises a
   typed `VfsError('IO')`.
 - **Key handling**: raw-key mode derives once and caches; passphrase mode derives per file
-  from that file's salt (secure but per-op cost — prefer raw-key for high-frequency I/O).
+  from that file's salt (secure but per-op cost - prefer raw-key for high-frequency I/O).
 - **Scope**: content is encrypted by default; filename obfuscation (path → HMAC) is opt-in.
 - **Composition**: as a middleware it wraps any VFS; wrapping `remote(...)` gives E2E so the
   server stores only ciphertext.
@@ -169,9 +169,9 @@ bridge serializes `{ code, message }` and reconstructs the typed error on the cl
 
 vfskit is a single abstract layer that many products sit on top of. Documented examples:
 
-- **Dropbox-like storage** — folders, metadata, sharing-by-prefix, optional encryption.
-- **Encrypted vault** — `encrypt(remote(...))` for end-to-end private storage.
-- **App-embedded structured storage** — wrap arbitrary app data into a structured FS.
+- **Dropbox-like storage** - folders, metadata, sharing-by-prefix, optional encryption.
+- **Encrypted vault** - `encrypt(remote(...))` for end-to-end private storage.
+- **App-embedded structured storage** - wrap arbitrary app data into a structured FS.
 
 The runnable v1 example is a **Monaco-based editor over the real FS** (cheaper than S3, no
 external deps): `remote(ws)` → `serve(nodeFs)`, editing and saving files in a local folder

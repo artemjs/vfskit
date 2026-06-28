@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add two backend adapters — `@vfskit/node-fs` (real disk via `node:fs/promises`) and `@vfskit/s3` (S3 object storage via an injected client port) — each passing the existing `@vfskit/core/conformance` suite.
+**Goal:** Add two backend adapters - `@vfskit/node-fs` (real disk via `node:fs/promises`) and `@vfskit/s3` (S3 object storage via an injected client port) - each passing the existing `@vfskit/core/conformance` suite.
 
 **Architecture:** Both adapters implement the same `VFS` interface and are validated by the shared conformance suite. Node-FS roots a base directory and stores arbitrary metadata in a hidden sidecar manifest (`/.vfskit/meta.json`). S3 talks to a minimal `S3Like` port (so tests inject an in-memory fake, no AWS needed) and emulates POSIX directories with `key/` marker objects; it uses native S3 user-metadata.
 
@@ -215,7 +215,7 @@ Note for the implementer: `dirname` is imported from `@vfskit/core` but only `pd
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run packages/node-fs/src/index.test.ts && npm test && npm run typecheck`
-Expected: PASS — node-fs runs the full conformance suite (18 cases), whole suite + typecheck green.
+Expected: PASS - node-fs runs the full conformance suite (18 cases), whole suite + typecheck green.
 
 - [ ] **Step 5: Commit**
 
@@ -238,7 +238,7 @@ git commit -m "feat(node-fs): real-disk adapter with sidecar metadata"
 - Produces:
   - `S3Object`, `S3Like`, `S3Opts` interfaces.
   - `s3(opts: S3Opts): VFS`. Capabilities: `{ streaming: false, watch: false, atomicMove: false, nativeMeta: true, randomAccess: false }`. Directories emulated with `key/` marker objects; metadata stored in the object's native meta.
-  - `memoryS3(): S3Like` — an in-memory fake of the port (used by the test and reusable).
+  - `memoryS3(): S3Like` - an in-memory fake of the port (used by the test and reusable).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -445,12 +445,12 @@ export function s3(opts: S3Opts): VFS {
 }
 ```
 
-Note for the implementer: `move` uses `this.copy`/`this.remove`. Because the returned object is a plain literal, `this` refers to that literal at call time — this is intentional and required; do not refactor it into closures that drop `this`. If strict `noImplicitThis` complains, keep the methods as shown (object-literal method shorthand provides a typed `this`).
+Note for the implementer: `move` uses `this.copy`/`this.remove`. Because the returned object is a plain literal, `this` refers to that literal at call time - this is intentional and required; do not refactor it into closures that drop `this`. If strict `noImplicitThis` complains, keep the methods as shown (object-literal method shorthand provides a typed `this`).
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run packages/s3/src/index.test.ts && npm test && npm run typecheck`
-Expected: PASS — s3 runs the full conformance suite (18 cases) against `memoryS3()`, whole suite + typecheck green.
+Expected: PASS - s3 runs the full conformance suite (18 cases) against `memoryS3()`, whole suite + typecheck green.
 
 - [ ] **Step 5: Commit**
 
@@ -464,12 +464,12 @@ git commit -m "feat(s3): object-storage adapter over an injectable client port"
 ## Self-Review
 
 **Spec coverage (Part 2 scope):**
-- Node-FS adapter implementing `VFS` over real disk — Task 1. ✔
-- S3 adapter implementing `VFS` over object storage — Task 2. ✔
-- Each passes the shared conformance suite (the Part-1 contract gate) — Tasks 1 & 2 run `runConformance`. ✔
+- Node-FS adapter implementing `VFS` over real disk - Task 1. ✔
+- S3 adapter implementing `VFS` over object storage - Task 2. ✔
+- Each passes the shared conformance suite (the Part-1 contract gate) - Tasks 1 & 2 run `runConformance`. ✔
 - Metadata first-class on adapters without native meta (node-fs sidecar manifest) and with native meta (s3 object metadata). ✔
 - S3 tested without AWS via an injected in-memory port fake (`memoryS3`). ✔
-- Compact, comment-free, English, ESM, strict — Global Constraints. ✔
+- Compact, comment-free, English, ESM, strict - Global Constraints. ✔
 - Deferred to Part 3: `remote`/`serve`, transports, facades, Monaco example. Streaming stays deferred.
 
 **Placeholder scan:** No TBD/TODO; every code step contains complete code. ✔

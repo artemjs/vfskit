@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@main/assets/banner.svg" alt="vfskit" width="760">
+  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@main/assets/logo.svg" alt="vfskit" width="160" height="160">
 </p>
+
+<h1 align="center">vfskit</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.1.0-7c8cff?style=flat-square" alt="version">
@@ -11,21 +13,21 @@
 </p>
 
 <p align="center">
-  <b>One <code>VFS</code> interface over any backend</b> — in-memory, real disk, S3, or your own.<br>
-  Composable adapters, encryption, caching, optimistic concurrency, and a browser&nbsp;⇄&nbsp;server bridge.
+  <b>One <code>VFS</code> interface over any backend</b>: in-memory, real disk, S3, or your own.<br>
+  Composable adapters, encryption, caching, optimistic concurrency, and a browser&nbsp;&#8646;&nbsp;server bridge.
 </p>
 
 ---
 
 vfskit wraps any kind of storage behind a single, small `VFS` interface, then lets you
-**compose** behavior on top of it — encryption, caching, a remote bridge — and drive it from
+**compose** behavior on top of it - encryption, caching, a remote bridge - and drive it from
 the browser exactly as you would on the server. Anything you can read, write, and list
 becomes a structured file system with files and metadata.
 
 It ships in two faces under one brand:
 
-- **`vfskit`** (npm, Node) — the full kit: core + memory + node-fs + s3 + encrypt + cache + serve + remote.
-- **`vfskit-front`** (npm + jsDelivr, browser) — core + memory + encrypt + cache + a remote client.
+- **`vfskit`** (npm, Node) - the full kit: core + memory + node-fs + s3 + encrypt + cache + serve + remote.
+- **`vfskit-front`** (npm + jsDelivr, browser) - core + memory + encrypt + cache + a remote client.
 
 Both expose **identical API names**, so your code looks the same on either side.
 
@@ -68,7 +70,7 @@ interface VFS {
 - **Middleware** wraps a `VFS` and returns a `VFS`: `encrypt(vfs, { passphrase })`, `cache(vfs)`.
 - **Bridge** connects them across the wire: `serve(vfs)` on the server, `remote(transport)` on the client.
 
-Compose freely. `encrypt(remote(transport))` is end-to-end encryption — the server only ever
+Compose freely. `encrypt(remote(transport))` is end-to-end encryption - the server only ever
 stores ciphertext.
 
 ## Quick start
@@ -109,7 +111,7 @@ Every adapter passes the same conformance suite, so a new one "just works" once 
 ## Bring your own storage
 
 vfskit is just an interface. To put *any* backend behind the same API, write a function that
-returns a `VFS` — a plain object literal implementing the methods above — over your store
+returns a `VFS` - a plain object literal implementing the methods above - over your store
 (a database, a KV cache, `localStorage`, a blob service, whatever):
 
 ```ts
@@ -136,7 +138,7 @@ describe('my adapter', () => {
 })
 ```
 
-If it passes, your storage now works everywhere vfskit works — behind `encrypt(...)`, behind
+If it passes, your storage now works everywhere vfskit works - behind `encrypt(...)`, behind
 `serve(...)`, driven by a browser `remote(...)`. A complete worked example (a key-value
 backend) lives in [`examples/custom-adapter`](examples/custom-adapter). `conformanceCases` is
 framework-agnostic (`{ name, run(makeVfs) }[]`), so you can drive it from any test runner.
@@ -168,7 +170,7 @@ Pass your own `store` to back the cache with anything (e.g. `localStorage`).
 
 Adapters that report `conditionalWrite` give every file an opaque `version` token (via
 `stat`). Pass it back as `ifMatch` to make a write succeed only if nobody changed the file in
-between — otherwise it fails with a typed `CONFLICT`. `ifAbsent` makes a create-only write.
+between - otherwise it fails with a typed `CONFLICT`. `ifAbsent` makes a create-only write.
 
 ```ts
 const { version } = await fs.stat('/doc')
@@ -181,7 +183,7 @@ Supported by `memory`, `nodeFs`, `s3`, and transparently over `remote(...)`.
 ## Streaming
 
 `readStream(vfs, path)` and `writeStream(vfs, path)` give Web `ReadableStream` /
-`WritableStream` over any adapter — native where supported (`nodeFs` streams real file
+`WritableStream` over any adapter - native where supported (`nodeFs` streams real file
 handles), buffered otherwise, so the API is uniform:
 
 ```ts
@@ -197,19 +199,19 @@ behind them (the stream still yields plaintext; the disk still holds ciphertext)
 
 ## Transports
 
-- `httpTransport(url)` — request/response; works on serverless/edge. No `watch`.
-- `wsTransport(url)` — multiplexed; enables `watch`/events.
+- `httpTransport(url)` - request/response; works on serverless/edge. No `watch`.
+- `wsTransport(url)` - multiplexed; enables `watch`/events.
 
 ## Errors
 
 Typed hierarchy with stable wire codes, reconstructed on the client across the bridge:
 `NOT_FOUND`, `ALREADY_EXISTS`, `NOT_A_DIRECTORY`, `IS_A_DIRECTORY`, `PERMISSION_DENIED`,
-`UNSUPPORTED`, `CONFLICT`, `IO`. Detect with `isVfsError(e)` (brand-based — survives bundling
+`UNSUPPORTED`, `CONFLICT`, `IO`. Detect with `isVfsError(e)` (brand-based - survives bundling
 and the RPC round-trip).
 
 ## Example
 
-[`examples/cloud-ide`](examples/cloud-ide) — Monaco editing files on a real-disk VFS over a
+[`examples/cloud-ide`](examples/cloud-ide) - Monaco editing files on a real-disk VFS over a
 WebSocket bridge, with per-user isolation. Swapping the backend to S3 is one line.
 
 ## License

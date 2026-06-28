@@ -876,14 +876,14 @@ git commit -m "feat(encrypt): aes-gcm middleware"
 ## Self-Review
 
 **Spec coverage (Part 1 scope):**
-- One `VFS` interface — Task 1 (`types.ts`). ✔
-- Path/bytes utils — Tasks 1, 3. ✔
-- Typed error hierarchy with codes — Task 2. ✔
-- Capabilities + conformance suite — Task 4. ✔
-- Memory adapter (conformance reference) — Task 4. ✔
-- First-class metadata (`getMeta`/`setMeta`, `write({meta})`) — Tasks 1, 4 (memory), conformance asserts it. ✔
-- Encryption (AES-GCM, key or passphrase, per-file IV, tamper detection, composable) — Task 5. ✔
-- Compact, comment-free, English, ESM, strict — enforced by Global Constraints. ✔
+- One `VFS` interface - Task 1 (`types.ts`). ✔
+- Path/bytes utils - Tasks 1, 3. ✔
+- Typed error hierarchy with codes - Task 2. ✔
+- Capabilities + conformance suite - Task 4. ✔
+- Memory adapter (conformance reference) - Task 4. ✔
+- First-class metadata (`getMeta`/`setMeta`, `write({meta})`) - Tasks 1, 4 (memory), conformance asserts it. ✔
+- Encryption (AES-GCM, key or passphrase, per-file IV, tamper detection, composable) - Task 5. ✔
+- Compact, comment-free, English, ESM, strict - enforced by Global Constraints. ✔
 - Deferred to later parts: node-fs, s3 (Part 2); remote/serve, transports, facades, example (Part 3). Streaming deferred entirely (capability stays false).
 
 **Placeholder scan:** No TBD/TODO; every code step contains complete code. ✔

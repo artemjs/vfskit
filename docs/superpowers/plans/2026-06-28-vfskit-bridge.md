@@ -4,11 +4,11 @@
 
 ## Packages
 
-- `@vfskit/rpc` — transport-agnostic wire codec (`encodeCall`/`decodeReply`/`handle`) + WS frame helpers (`wsPack`/`wsUnpack`). Maps 1:1 to VFS methods; JSON header + binary payload.
-- `@vfskit/server` — `serve(vfs)` → `{ handle, fetch, socket }`. `handle` is the core; `fetch` is HTTP (request/response); `socket(send)` is WS duplex incl. watch push.
-- `@vfskit/remote` — `remote(transport)` → client `VFS`. Defines `Transport`. `watch` only when the transport supports it; else `Unsupported`.
-- `@vfskit/transport-http` — `httpTransport(url, fetch?)` client (request/response; no watch).
-- `@vfskit/transport-ws` — `wsTransport(url, factory?)` client (multiplexed by id; watch via event frames).
+- `@vfskit/rpc` - transport-agnostic wire codec (`encodeCall`/`decodeReply`/`handle`) + WS frame helpers (`wsPack`/`wsUnpack`). Maps 1:1 to VFS methods; JSON header + binary payload.
+- `@vfskit/server` - `serve(vfs)` → `{ handle, fetch, socket }`. `handle` is the core; `fetch` is HTTP (request/response); `socket(send)` is WS duplex incl. watch push.
+- `@vfskit/remote` - `remote(transport)` → client `VFS`. Defines `Transport`. `watch` only when the transport supports it; else `Unsupported`.
+- `@vfskit/transport-http` - `httpTransport(url, fetch?)` client (request/response; no watch).
+- `@vfskit/transport-ws` - `wsTransport(url, factory?)` client (multiplexed by id; watch via event frames).
 
 ## Contract gate
 
@@ -21,7 +21,7 @@ The bridge passes the SAME `@vfskit/core/conformance` suite over three in-memory
 
 ## Example
 
-`examples/cloud-ide` — Monaco + `remote(wsTransport)` ↔ `serve(nodeFs(dir))` with per-user prefix isolation; switching to S3 is one line.
+`examples/cloud-ide` - Monaco + `remote(wsTransport)` ↔ `serve(nodeFs(dir))` with per-user prefix isolation; switching to S3 is one line.
 
 ## npm 1.0 prep
 
