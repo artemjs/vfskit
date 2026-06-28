@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@main/assets/logo.svg?v=2" alt="vfskit" width="160" height="160">
+  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@main/assets/logo.svg?v=3" alt="vfskit" width="160" height="160">
 </p>
 
 <h1 align="center">vfskit</h1>
