@@ -148,5 +148,16 @@ export function runConformance(make: () => VFS): void {
       try { await fs.mkdir('/f/sub', { recursive: true }) } catch (e) { err = e }
       expect(isVfsError(err) && err.code).toBe('NOT_A_DIRECTORY')
     })
+    it('throws ALREADY_EXISTS moving or copying onto an existing path', async () => {
+      const fs = make()
+      await fs.write('/a', '1')
+      await fs.write('/b', '2')
+      let m: unknown
+      try { await fs.move('/a', '/b') } catch (e) { m = e }
+      expect(isVfsError(m) && m.code).toBe('ALREADY_EXISTS')
+      let c: unknown
+      try { await fs.copy('/a', '/b') } catch (e) { c = e }
+      expect(isVfsError(c) && c.code).toBe('ALREADY_EXISTS')
+    })
   })
 }
