@@ -63,7 +63,7 @@ export function kv(opts: KvOpts): VFS {
   const children = async (p: string) => (await s.list(K(p) === NS + '/' ? NS + '/' : K(p) + '/')).map(unkey).filter((c) => c !== p && within(p, c))
   const parentDir = async (p: string) => { const d = dirname(p); const r = await get(d); if (!r) throw notFound(d); if (r.t !== 'dir') throw notADirectory(d) }
 
-  const init = put('/', { t: 'dir', m: {}, v: 0 }).catch(() => {})
+  const init = (async () => { if (!(await s.get(K('/')))) await put('/', { t: 'dir', m: {}, v: 0 }) })()
 
   return {
     capabilities: () => caps,

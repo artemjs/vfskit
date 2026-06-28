@@ -16,6 +16,11 @@ describe('kv', () => {
     await kv({ store, prefix: 'u1' }).write('/a', 'one')
     expect(await kv({ store, prefix: 'u2' }).exists('/a')).toBe(false)
   })
+  it('keeps root metadata across re-opens', async () => {
+    const store = memKv()
+    await kv({ store }).setMeta('/', { label: 'root' })
+    expect((await kv({ store }).getMeta('/')).label).toBe('root')
+  })
 })
 
 class MemStorage {

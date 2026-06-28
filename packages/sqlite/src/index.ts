@@ -28,7 +28,7 @@ export function sqlite(filename: string): VFS {
   const put = (p: string, type: 'file' | 'dir', data: Uint8Array | null, meta: Meta, version: number) =>
     qPut.run(p, type, data, JSON.stringify(meta), version)
   const within = (a: string, b: string) => b === a || b.startsWith(a === '/' ? '/' : a + '/')
-  const childRows = (p: string) => (qChildren.all((p === '/' ? '/' : p + '/') + '%') as { path: string; type: 'file' | 'dir' }[])
+  const childRows = (p: string) => (qChildren.all(likeEsc(p === '/' ? '/' : p + '/') + '%') as { path: string; type: 'file' | 'dir' }[])
     .filter((r) => within(p, r.path) && r.path !== p)
   const need = (p: string): Row => { const r = get(p); if (!r) throw notFound(p); return r }
   const parentDir = (p: string) => { const d = dirname(p); const r = get(d); if (!r) throw notFound(d); if (r.type !== 'dir') throw notADirectory(d) }

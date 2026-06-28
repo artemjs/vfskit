@@ -20,4 +20,17 @@ describe('sqlite', () => {
     expect(toText(await fs2.read('/a'))).toBe('durable')
     expect((await fs2.getMeta('/a')).k).toBe('v')
   })
+  it('handles LIKE-special characters in paths without losing the subtree', async () => {
+    const fs = sqlite(':memory:')
+    for (const d of ['/a\\b', '/p%c', '/u_d']) {
+      await fs.mkdir(d)
+      await fs.write(d + '/x', '1')
+      expect((await fs.list(d)).map((e) => e.name)).toEqual(['x'])
+      let err: unknown
+      try { await fs.remove(d) } catch (e) { err = e }
+      expect(err).toBeTruthy()
+      await fs.remove(d, { recursive: true })
+      expect(await fs.exists(d)).toBe(false)
+    }
+  })
 })

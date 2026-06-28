@@ -1,14 +1,13 @@
 import {
   type VFS, type Entry, type Meta, type Capabilities,
   type ListOpts, type MkdirOpts, type RemoveOpts, type WriteOpts, type Unsubscribe,
-  normalize, dirname, basename, segments, toBytes, concat,
+  normalize, dirname, basename, segments, toBytes,
   notFound, alreadyExists, isADirectory, notADirectory, io,
 } from '@vfskit/core'
 
 type DirH = FileSystemDirectoryHandle
 const entriesOf = (dir: DirH) => (dir as unknown as { values(): AsyncIterableIterator<{ kind: 'file' | 'directory'; name: string }> }).values()
 const caps: Capabilities = { streaming: true, watch: false, atomicMove: false, nativeMeta: false, randomAccess: false, conditionalWrite: false }
-const META = '/.vfskit/meta.json'
 
 function mapErr(p: string, e: unknown): never {
   const n = (e as { name?: string }).name
@@ -33,7 +32,7 @@ export function opfs(root?: DirH): VFS {
     const par = await parent(p).catch(() => null)
     if (!par) return null
     const name = basename(p)
-    try { await par.getFileHandle(name); return 'file' } catch { /* not a file */ }
+    try { await par.getFileHandle(name); return 'file' } catch {}
     try { await par.getDirectoryHandle(name); return 'dir' } catch { return null }
   }
 

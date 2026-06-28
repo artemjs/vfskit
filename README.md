@@ -26,8 +26,8 @@ becomes a structured file system with files and metadata.
 
 It ships in two faces under one brand:
 
-- **`/vfskit`** (npm, Node) - the full kit: core + memory + node-fs + s3 + encrypt + cache + serve + remote.
-- **`/vfskit-front`** (npm + jsDelivr, browser) - core + memory + encrypt + cache + a remote client.
+- **`@artemjs/vfskit`** (npm, Node) - the full kit: core + memory + node-fs + s3 + sqlite + kv + encrypt + cache + serve + remote.
+- **`@artemjs/vfskit-front`** (npm + jsDelivr, browser) - core + memory + opfs + kv + encrypt + cache + a remote client.
 
 Both expose **identical API names**, so your code looks the same on either side.
 
