@@ -78,9 +78,9 @@ await fs.write('/hello.txt', 'hi')
 
 | Adapter | Where | Metadata | Notes |
 | --- | --- | --- | --- |
-| `memory()` | anywhere | native | reference implementation |
-| `nodeFs(dir)` | Node | sidecar `.vfskit/meta.json` | rooted at `dir` |
-| `s3({ client, prefix? })` | Node | native object metadata | inject any `S3Like` client; POSIX dirs emulated with markers |
+| `memory()` | anywhere | native | reference implementation; synchronous `watch` |
+| `nodeFs(dir)` | Node | sidecar `.vfskit/meta.json` | rooted at `dir`; `watch` via `fs.watch` |
+| `s3({ client, prefix?, pollMs? })` | Node | native object metadata | inject any `S3Like` client; POSIX dirs emulated with markers; `watch` by polling |
 
 Every adapter passes the same conformance suite, so a new one "just works" once it does too.
 

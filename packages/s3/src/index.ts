@@ -14,9 +14,9 @@ export interface S3Like {
   head(key: string): Promise<{ size: number; mtime: number; meta: Meta } | null>
   list(prefix: string): Promise<{ key: string; size: number; mtime: number }[]>
 }
-export interface S3Opts { client: S3Like; prefix?: string }
+export interface S3Opts { client: S3Like; prefix?: string; pollMs?: number }
 
-const caps: Capabilities = { streaming: false, watch: false, atomicMove: false, nativeMeta: true, randomAccess: false }
+const caps: Capabilities = { streaming: false, watch: true, atomicMove: false, nativeMeta: true, randomAccess: false }
 const EMPTY = new Uint8Array(0)
 
 export function memoryS3(): S3Like {
@@ -176,6 +176,36 @@ export function s3(opts: S3Opts): VFS {
       if (k === 'file') { const o = await c.get(key(p)); await c.put(key(p), o?.body ?? EMPTY, meta) }
       else await c.put(marker(p), EMPTY, meta)
     },
-    watch(): Unsubscribe { return () => {} },
+    watch(path, cb): Unsubscribe {
+      const p = normalize(path)
+      const pre = prefixOf(p)
+      const self = key(p) ? key(p) + '/' : ''
+      const unkey = (k: string) => normalize('/' + (base ? k.slice(base.length + 1) : k))
+      let prev = new Map<string, number>()
+      let primed = false
+      const snap = async () => {
+        const m = new Map<string, number>()
+        for (const o of await c.list(pre)) if (o.key !== self) m.set(o.key, o.mtime)
+        return m
+      }
+      snap().then((m) => { prev = m; primed = true })
+      let busy = false
+      const tick = async () => {
+        if (!primed || busy) return
+        busy = true
+        try {
+          const cur = await snap()
+          for (const [k, mt] of cur) {
+            if (!prev.has(k)) cb({ type: 'create', path: unkey(k) })
+            else if (prev.get(k) !== mt) cb({ type: 'update', path: unkey(k) })
+          }
+          for (const k of prev.keys()) if (!cur.has(k)) cb({ type: 'remove', path: unkey(k) })
+          prev = cur
+        } finally { busy = false }
+      }
+      const timer = setInterval(() => void tick(), opts.pollMs ?? 200)
+      ;(timer as { unref?: () => void }).unref?.()
+      return () => clearInterval(timer)
+    },
   }
 }

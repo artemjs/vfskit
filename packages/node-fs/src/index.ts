@@ -1,4 +1,4 @@
-import { promises as fs } from 'node:fs'
+import { promises as fs, watch as fsWatch, type FSWatcher } from 'node:fs'
 import { join as pjoin, dirname as pdirname } from 'node:path'
 import {
   type VFS, type Entry, type Meta, type Capabilities,
@@ -8,7 +8,7 @@ import {
   notFound, alreadyExists, isADirectory, notADirectory, io, VfsError,
 } from '@vfskit/core'
 
-const caps: Capabilities = { streaming: false, watch: false, atomicMove: true, nativeMeta: false, randomAccess: false }
+const caps: Capabilities = { streaming: false, watch: true, atomicMove: true, nativeMeta: false, randomAccess: false }
 const META = '/.vfskit/meta.json'
 
 export function nodeFs(root: string): VFS {
@@ -131,6 +131,21 @@ export function nodeFs(root: string): VFS {
       await wrap(p, () => fs.stat(real(p)).then(() => {}))
       const m = await loadMap(); m[p] = meta; await saveMap(m)
     },
-    watch(): Unsubscribe { return () => {} },
+    watch(path, cb): Unsubscribe {
+      const p = normalize(path)
+      const on = (event: string, filename: string | Buffer | null) => {
+        if (!filename) return
+        const cp = normalize(p + '/' + filename.toString())
+        if (hidden(cp)) return
+        fs.stat(real(cp)).then(
+          () => cb({ type: event === 'change' ? 'update' : 'create', path: cp }),
+          () => cb({ type: 'remove', path: cp }),
+        )
+      }
+      let w: FSWatcher
+      try { w = fsWatch(real(p), { recursive: true }, on) }
+      catch { try { w = fsWatch(real(p), on) } catch { return () => {} } }
+      return () => w.close()
+    },
   }
 }

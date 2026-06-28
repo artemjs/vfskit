@@ -15,6 +15,10 @@ async function throws(fn: () => Promise<unknown>) {
   try { await fn() } catch (x) { e = x }
   ok(e, 'expected throw')
 }
+async function waitFor(cond: () => boolean, ms = 2000) {
+  const step = 10
+  for (let t = 0; t < ms; t += step) { if (cond()) return; await new Promise((r) => setTimeout(r, step)) }
+}
 
 export interface ConformanceCase { name: string; run(make: () => VFS): Promise<void> }
 
@@ -50,7 +54,8 @@ export const conformanceCases: ConformanceCase[] = [
   { name: 'emits watch events when supported', async run(make) {
     const fs = make(); if (!fs.capabilities().watch) return
     const events: string[] = []; const off = fs.watch('/', (e) => events.push(e.type + ':' + e.path))
-    await fs.write('/a', '1'); off(); ok(events.includes('create:/a')) } },
+    await new Promise((r) => setTimeout(r, 60))
+    await fs.write('/a', '1'); await waitFor(() => events.includes('create:/a')); off(); ok(events.includes('create:/a')) } },
   { name: 'moves a directory subtree', async run(make) {
     const fs = make(); await fs.mkdir('/d'); await fs.mkdir('/d/sub'); await fs.write('/d/sub/a', '1')
     await fs.move('/d', '/e'); eq(await fs.exists('/d'), false); eq(toText(await fs.read('/e/sub/a')), '1') } },
