@@ -28,7 +28,7 @@ describe('encrypt', () => {
     const fs = encrypt(inner, { key: KEY })
     await fs.write('/a', 'secret')
     const raw = await inner.read('/a')
-    raw[20] ^= 0xff
+    raw[raw.length - 1] ^= 0xff
     await inner.write('/a', raw)
     let err: unknown
     try { await fs.read('/a') } catch (e) { err = e }
