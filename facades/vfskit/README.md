@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@main/assets/logo.svg?v=4" alt="vfskit" width="160" height="160">
+  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@6dffa9f/assets/logo.svg" alt="vfskit" width="160" height="160">
 </p>
 
 <h1 align="center">vfskit</h1>
@@ -45,7 +45,7 @@ import { remote, wsTransport } from 'https://cdn.jsdelivr.net/npm/vfskit-front/+
 ## Everything is a VFS
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@main/assets/architecture.svg" alt="vfskit architecture" width="820">
+  <img src="https://cdn.jsdelivr.net/gh/artemjs/vfskit@6dffa9f/assets/architecture.svg" alt="vfskit architecture" width="820">
 </p>
 
 ```ts
