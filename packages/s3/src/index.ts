@@ -70,7 +70,7 @@ export function s3(opts: S3Opts): VFS {
       await needDirParent(p)
       const h = await c.head(key(p))
       if (wopts?.ifAbsent && h) throw alreadyExists(p)
-      if (wopts?.ifMatch !== undefined && (h?.version ?? '') !== wopts.ifMatch) throw conflict(p)
+      if (wopts?.ifMatch !== undefined && (h ? h.version : undefined) !== wopts.ifMatch) throw conflict(p)
       await c.put(key(p), toBytes(data), wopts?.meta ?? h?.meta ?? {})
     },
     async list(path, lopts?: ListOpts) {
@@ -114,8 +114,9 @@ export function s3(opts: S3Opts): VFS {
     },
     async mkdir(path, mopts?: MkdirOpts) {
       const p = normalize(path)
-      if ((await kind(p)) !== null) {
-        if (mopts?.recursive) return
+      const ek = await kind(p)
+      if (ek !== null) {
+        if (mopts?.recursive && ek === 'dir') return
         throw alreadyExists(p)
       }
       if (mopts?.recursive) {
@@ -134,6 +135,7 @@ export function s3(opts: S3Opts): VFS {
     },
     async remove(path, ropts?: RemoveOpts) {
       const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
       const k = await kind(p)
       if (k === null) throw notFound(p)
       if (k === 'file') { await c.del(key(p)); return }

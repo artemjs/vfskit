@@ -73,7 +73,7 @@ export function kv(opts: KvOpts): VFS {
       const prev = await get(p)
       if (prev?.t === 'dir') throw isADirectory(p)
       if (o?.ifAbsent && prev) throw alreadyExists(p)
-      if (o?.ifMatch !== undefined && String(prev?.v ?? '') !== o.ifMatch) throw conflict(p)
+      if (o?.ifMatch !== undefined && (prev ? String(prev.v) : undefined) !== o.ifMatch) throw conflict(p)
       await put(p, { t: 'file', d: b64encode(toBytes(data)), m: o?.meta ?? prev?.m ?? {}, v: (prev?.v ?? 0) + 1 })
     },
     async list(path, o?: ListOpts) {
@@ -93,7 +93,7 @@ export function kv(opts: KvOpts): VFS {
     async exists(path) { await init; return !!(await get(normalize(path))) },
     async mkdir(path, o?: MkdirOpts) {
       await init; const p = normalize(path); const ex = await get(p)
-      if (ex) { if (o?.recursive) return; throw alreadyExists(p) }
+      if (ex) { if (o?.recursive && ex.t === 'dir') return; throw alreadyExists(p) }
       if (o?.recursive) {
         let cur = ''
         for (const seg of p.split('/').filter(Boolean)) { cur += '/' + seg; const e = await get(cur); if (e?.t === 'file') throw notADirectory(cur); if (!e) await put(cur, { t: 'dir', m: {}, v: 0 }) }
@@ -102,7 +102,9 @@ export function kv(opts: KvOpts): VFS {
       await parentDir(p); await put(p, { t: 'dir', m: {}, v: 0 })
     },
     async remove(path, o?: RemoveOpts) {
-      await init; const p = normalize(path); await need(p)
+      await init; const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
+      await need(p)
       const ch = await children(p)
       if (ch.length && !o?.recursive) throw io('directory not empty', p)
       for (const c of [...ch, p]) await s.delete(K(c))
@@ -115,7 +117,7 @@ export function kv(opts: KvOpts): VFS {
       for (const c of [a, ...await children(a)]) { const r = await get(c); if (r) await put(b + c.slice(a.length), { ...r, v: (r.v ?? 0) + 1 }) }
     },
     async getMeta(path) { await init; return { ...(await need(normalize(path))).m } },
-    async setMeta(path, meta) { await init; const p = normalize(path); const r = await need(p); await put(p, { ...r, m: { ...meta } }) },
+    async setMeta(path, meta) { await init; const p = normalize(path); const r = await need(p); await put(p, { ...r, m: { ...meta }, v: r.t === 'file' ? (r.v ?? 0) + 1 : r.v }) },
     watch(): Unsubscribe { return () => {} },
   }
 }

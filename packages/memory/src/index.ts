@@ -83,8 +83,9 @@ export function memory(): VFS {
     },
     async mkdir(path, opts?: MkdirOpts) {
       const p = normalize(path)
-      if (nodes.has(p)) {
-        if (opts?.recursive) return
+      const cur0 = nodes.get(p)
+      if (cur0) {
+        if (opts?.recursive && cur0.type === 'dir') return
         throw alreadyExists(p)
       }
       if (opts?.recursive) {
@@ -103,6 +104,7 @@ export function memory(): VFS {
     },
     async remove(path, opts?: RemoveOpts) {
       const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
       need(p)
       const children = [...nodes.keys()].filter((k) => k !== p && within(p, k))
       if (children.length && !opts?.recursive) throw io('directory not empty', p)
@@ -149,6 +151,7 @@ export function memory(): VFS {
       const n = need(normalize(path))
       n.meta = { ...meta }
       n.mtime = t()
+      if (n.type === 'file') n.version = ver()
     },
     watch(path, cb): Unsubscribe {
       const w = { base: normalize(path), cb }

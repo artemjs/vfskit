@@ -41,7 +41,7 @@ export function sqlite(filename: string): VFS {
       const p = normalize(path); parentDir(p); const prev = get(p)
       if (prev?.type === 'dir') throw isADirectory(p)
       if (o?.ifAbsent && prev) throw alreadyExists(p)
-      if (o?.ifMatch !== undefined && String(prev?.version ?? '') !== o.ifMatch) throw conflict(p)
+      if (o?.ifMatch !== undefined && (prev ? String(prev.version) : undefined) !== o.ifMatch) throw conflict(p)
       const meta = o?.meta ?? (prev ? JSON.parse(prev.meta) : {})
       put(p, 'file', toBytes(data), meta, (prev?.version ?? 0) + 1)
     },
@@ -61,7 +61,7 @@ export function sqlite(filename: string): VFS {
     async exists(path) { return !!get(normalize(path)) },
     async mkdir(path, o?: MkdirOpts) {
       const p = normalize(path); const ex = get(p)
-      if (ex) { if (o?.recursive) return; throw alreadyExists(p) }
+      if (ex) { if (o?.recursive && ex.type === 'dir') return; throw alreadyExists(p) }
       if (o?.recursive) {
         let cur = ''
         for (const seg of p.split('/').filter(Boolean)) { cur += '/' + seg; const e = get(cur); if (e?.type === 'file') throw notADirectory(cur); if (!e) put(cur, 'dir', null, {}, 0) }
@@ -70,7 +70,9 @@ export function sqlite(filename: string): VFS {
       parentDir(p); put(p, 'dir', null, {}, 0)
     },
     async remove(path, o?: RemoveOpts) {
-      const p = normalize(path); need(p); const ch = childRows(p)
+      const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
+      need(p); const ch = childRows(p)
       if (ch.length && !o?.recursive) throw io('directory not empty', p)
       for (const c of ch) qDel.run(c.path)
       qDel.run(p)
@@ -86,7 +88,7 @@ export function sqlite(filename: string): VFS {
       }
     },
     async getMeta(path) { return JSON.parse(need(normalize(path)).meta) },
-    async setMeta(path, meta) { const p = normalize(path); const r = need(p); put(p, r.type, r.data ? new Uint8Array(r.data) : null, meta, r.version) },
+    async setMeta(path, meta) { const p = normalize(path); const r = need(p); put(p, r.type, r.data ? new Uint8Array(r.data) : null, meta, r.type === 'file' ? r.version + 1 : r.version) },
     watch(): Unsubscribe { return () => {} },
   }
 }

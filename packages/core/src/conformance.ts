@@ -91,6 +91,28 @@ export const conformanceCases: ConformanceCase[] = [
     const fs = make(); if (!fs.capabilities().conditionalWrite) return
     await fs.write('/a', '1'); await code(() => fs.write('/a', '2', { ifAbsent: true }), 'ALREADY_EXISTS')
     eq(toText(await fs.read('/a')), '1') } },
+  { name: 'rejects removing the root', async run(make) {
+    const fs = make()
+    await code(() => fs.remove('/'), 'IO')
+    await code(() => fs.remove('/', { recursive: true }), 'IO') } },
+  { name: 'mkdir over an existing file throws ALREADY_EXISTS', async run(make) {
+    const fs = make(); await fs.write('/f', '1')
+    await code(() => fs.mkdir('/f'), 'ALREADY_EXISTS')
+    await code(() => fs.mkdir('/f', { recursive: true }), 'ALREADY_EXISTS') } },
+  { name: 'ifMatch on a missing file always conflicts (when capable)', async run(make) {
+    const fs = make(); if (!fs.capabilities().conditionalWrite) return
+    await code(() => fs.write('/a', 'x', { ifMatch: '0' }), 'CONFLICT')
+    await code(() => fs.write('/a', 'x', { ifMatch: '' }), 'CONFLICT') } },
+  { name: 'setMeta assigns a new version (when capable)', async run(make) {
+    const fs = make(); if (!fs.capabilities().conditionalWrite) return
+    await fs.write('/a', '1'); const v = (await fs.stat('/a')).version
+    await fs.setMeta('/a', { x: 1 }); const v2 = (await fs.stat('/a')).version
+    ok(typeof v2 === 'string' && v2.length > 0 && v2 !== v, 'expected a new version after setMeta') } },
+  { name: 'copy assigns a new version to the copy (when capable)', async run(make) {
+    const fs = make(); if (!fs.capabilities().conditionalWrite) return
+    await fs.write('/a', '1'); const v = (await fs.stat('/a')).version
+    await fs.copy('/a', '/b'); const v2 = (await fs.stat('/b')).version
+    ok(typeof v2 === 'string' && v2.length > 0 && v2 !== v, 'expected a new version on copy') } },
   { name: 'rejects copy or move into its own subtree', async run(make) {
     const fs = make(); await fs.mkdir('/d'); await fs.write('/d/a', '1')
     await code(() => fs.copy('/d', '/d/x'), 'IO')

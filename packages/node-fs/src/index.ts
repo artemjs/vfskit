@@ -65,7 +65,7 @@ export function nodeFs(root: string): VFS {
       if (opts?.ifAbsent || opts?.ifMatch !== undefined) {
         const existed = await fs.stat(real(p)).then(() => true, () => false)
         if (opts.ifAbsent && existed) throw alreadyExists(p)
-        if (opts.ifMatch !== undefined && String(vmap[p] ?? '') !== opts.ifMatch) throw conflict(p)
+        if (opts.ifMatch !== undefined && (existed && vmap[p] != null ? String(vmap[p]) : undefined) !== opts.ifMatch) throw conflict(p)
       }
       await wrap(p, () => fs.writeFile(real(p), toBytes(data)).then(() => {}))
       vmap[p] = (vmap[p] ?? 0) + 1
@@ -107,6 +107,7 @@ export function nodeFs(root: string): VFS {
     },
     async remove(path, opts?: RemoveOpts) {
       const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
       await wrap(p, async () => {
         const st = await fs.stat(real(p))
         if (st.isDirectory()) {
@@ -142,7 +143,8 @@ export function nodeFs(root: string): VFS {
         await fs.cp(real(a), real(b), { recursive: true })
       })
       const m = await loadMap(); if (rekey(m, a, b, true)) await saveMap(m)
-      const vm = await loadVer(); if (rekey(vm, a, b, true)) await saveVer(vm)
+      const vm = await loadVer()
+      if (rekey(vm, a, b, true)) { for (const k of Object.keys(vm)) if (k === b || k.startsWith(b + '/')) vm[k] = (vm[k] ?? 0) + 1; await saveVer(vm) }
     },
     async getMeta(path) {
       const p = normalize(path)
@@ -151,8 +153,9 @@ export function nodeFs(root: string): VFS {
     },
     async setMeta(path, meta) {
       const p = normalize(path)
-      await wrap(p, () => fs.stat(real(p)).then(() => {}))
+      const st = await wrap(p, () => fs.stat(real(p)))
       const m = await loadMap(); m[p] = meta; await saveMap(m)
+      if (st.isFile()) { const vm = await loadVer(); vm[p] = (vm[p] ?? 0) + 1; await saveVer(vm) }
     },
     watch(path, cb): Unsubscribe {
       const p = normalize(path)

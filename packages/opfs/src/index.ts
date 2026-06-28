@@ -95,7 +95,7 @@ export function opfs(root?: DirH): VFS {
     async exists(path) { return (await kind(path)) !== null },
     async mkdir(path, o?: MkdirOpts) {
       const p = normalize(path); const k = await kind(p)
-      if (k !== null) { if (o?.recursive) return; throw alreadyExists(p) }
+      if (k !== null) { if (o?.recursive && k === 'dir') return; throw alreadyExists(p) }
       if (o?.recursive) {
         let cur = ''
         for (const s of segments(p)) { cur += '/' + s; const ck = await kind(cur); if (ck === 'file') throw notADirectory(cur); if (ck === null) await dirOf(segments(cur), true) }
@@ -104,7 +104,9 @@ export function opfs(root?: DirH): VFS {
       try { await (await parent(p)).getDirectoryHandle(basename(p), { create: true }) } catch (e) { mapErr(dirname(p), e) }
     },
     async remove(path, o?: RemoveOpts) {
-      const p = normalize(path); const k = await kind(p)
+      const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
+      const k = await kind(p)
       if (k === null) throw notFound(p)
       const par = await parent(p)
       try { await par.removeEntry(basename(p), { recursive: !!o?.recursive }) } catch (e) { mapErr(p, e) }

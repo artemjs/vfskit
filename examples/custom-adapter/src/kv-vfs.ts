@@ -49,12 +49,15 @@ export function kvVfs(store: Kv): VFS {
     async exists(path) { return !!get(normalize(path)) },
     async mkdir(path, o?: MkdirOpts) {
       const p = normalize(path)
-      if (get(p)) { if (o?.recursive) return; throw alreadyExists(p) }
+      const ex = get(p)
+      if (ex) { if (o?.recursive && ex.type === 'dir') return; throw alreadyExists(p) }
       if (o?.recursive) { let cur = ''; for (const s of p.split('/').filter(Boolean)) { cur += '/' + s; const e = get(cur); if (e?.type === 'file') throw notADirectory(cur); if (!e) put(cur, { type: 'dir', data: '', meta: {} }) } return }
       parentDir(p); put(p, { type: 'dir', data: '', meta: {} })
     },
     async remove(path, o?: RemoveOpts) {
-      const p = normalize(path); need(p); const ch = children(p)
+      const p = normalize(path)
+      if (p === '/') throw io('cannot remove root', p)
+      need(p); const ch = children(p)
       if (ch.length && !o?.recursive) throw io('directory not empty', p)
       for (const c of [...ch, p]) store.delete(K(c))
     },
