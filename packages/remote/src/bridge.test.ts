@@ -1,9 +1,24 @@
+import { describe, it, expect } from 'vitest'
 import { runConformance } from '@vfskit/core/conformance'
 import { memory } from '@vfskit/memory'
 import { serve } from '@vfskit/server'
+import { decodeCall } from '@vfskit/rpc'
 import { httpTransport, type FetchLike } from '@vfskit/transport-http'
 import { wsTransport, type SocketLike } from '@vfskit/transport-ws'
-import { remote } from './index'
+import { remote, type Transport } from './index'
+
+describe('remote wire', () => {
+  it('omits absent opts so server-side defaults survive', async () => {
+    let seen: unknown = 'unset'
+    const srv = serve(memory())
+    const t: Transport = { request: (b) => { seen = decodeCall(b).args[0]; return srv.handle(b) } }
+    const fs = remote(t)
+    await fs.mkdir('/d')
+    expect(seen).toBe(undefined)
+    await fs.list('/d')
+    expect(seen).toBe(undefined)
+  })
+})
 
 runConformance(() => {
   const srv = serve(memory())

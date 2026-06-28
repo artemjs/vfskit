@@ -15,7 +15,9 @@ export function remote(opts: Transport | RemoteOpts): VFS {
   const caps: Capabilities = (opts as RemoteOpts).capabilities
     ?? { streaming: false, watch: !!t.watch, atomicMove: false, nativeMeta: true, randomAccess: false }
   const call = async (method: string, path: string, args?: unknown[], data?: Uint8Array): Promise<DecodedReply> => {
-    const r = decodeReply(await t.request(encodeCall(method, path, args, data)))
+    const a = args ? [...args] : []
+    while (a.length && a[a.length - 1] === undefined) a.pop()
+    const r = decodeReply(await t.request(encodeCall(method, path, a, data)))
     if (!r.ok) throw new VfsError(r.code as ErrorCode, r.message ?? '', r.path)
     return r
   }
