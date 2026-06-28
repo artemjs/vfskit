@@ -5,11 +5,12 @@ import {
   type ListOpts, type MkdirOpts, type RemoveOpts, type WriteOpts,
   type Unsubscribe,
   normalize, toBytes,
-  notFound, alreadyExists, isADirectory, notADirectory, io, VfsError,
+  notFound, alreadyExists, isADirectory, notADirectory, io, conflict, VfsError,
 } from '@vfskit/core'
 
-const caps: Capabilities = { streaming: false, watch: true, atomicMove: true, nativeMeta: false, randomAccess: false }
+const caps: Capabilities = { streaming: false, watch: true, atomicMove: true, nativeMeta: false, randomAccess: false, conditionalWrite: true }
 const META = '/.vfskit/meta.json'
+const VER = '/.vfskit/ver.json'
 
 export function nodeFs(root: string): VFS {
   const real = (p: string) => pjoin(root, normalize(p))
@@ -21,6 +22,19 @@ export function nodeFs(root: string): VFS {
   const saveMap = async (m: Record<string, Meta>) => {
     await fs.mkdir(pdirname(real(META)), { recursive: true })
     await fs.writeFile(real(META), new TextEncoder().encode(JSON.stringify(m)))
+  }
+  const loadVer = async (): Promise<Record<string, number>> => {
+    try { return JSON.parse(new TextDecoder().decode(await fs.readFile(real(VER)))) }
+    catch { return {} }
+  }
+  const saveVer = async (m: Record<string, number>) => {
+    await fs.mkdir(pdirname(real(VER)), { recursive: true })
+    await fs.writeFile(real(VER), new TextEncoder().encode(JSON.stringify(m)))
+  }
+  const rekey = (m: Record<string, unknown>, a: string, b: string, keep: boolean) => {
+    let changed = false
+    for (const k of Object.keys(m)) if (k === a || k.startsWith(a + '/')) { m[b + k.slice(a.length)] = m[k]; if (!keep) delete m[k]; changed = true }
+    return changed
   }
   const wrap = async <T>(p: string, fn: () => Promise<T>): Promise<T> => {
     try { return await fn() }
@@ -45,10 +59,18 @@ export function nodeFs(root: string): VFS {
     },
     async write(path, data, opts?: WriteOpts) {
       const p = normalize(path)
+      const vmap = await loadVer()
+      if (opts?.ifAbsent || opts?.ifMatch !== undefined) {
+        const existed = await fs.stat(real(p)).then(() => true, () => false)
+        if (opts.ifAbsent && existed) throw alreadyExists(p)
+        if (opts.ifMatch !== undefined && String(vmap[p] ?? '') !== opts.ifMatch) throw conflict(p)
+      }
       await wrap(p, async () => {
         await fs.access(pdirname(real(p)))
         await fs.writeFile(real(p), toBytes(data))
       })
+      vmap[p] = (vmap[p] ?? 0) + 1
+      await saveVer(vmap)
       if (opts?.meta) { const m = await loadMap(); m[p] = opts.meta; await saveMap(m) }
     },
     async list(path, opts?: ListOpts) {
@@ -73,7 +95,8 @@ export function nodeFs(root: string): VFS {
       return wrap(p, async () => {
         const st = await fs.stat(real(p))
         const dir = st.isDirectory()
-        return { type: dir ? 'dir' : 'file', size: dir ? 0 : st.size, mtime: st.mtimeMs, ctime: st.ctimeMs, meta: (await loadMap())[p] ?? {} }
+        const v = dir ? undefined : (await loadVer())[p]
+        return { type: dir ? 'dir' : 'file', size: dir ? 0 : st.size, mtime: st.mtimeMs, ctime: st.ctimeMs, meta: (await loadMap())[p] ?? {}, version: v != null ? String(v) : undefined }
       })
     },
     async exists(path) {
@@ -96,6 +119,10 @@ export function nodeFs(root: string): VFS {
       let changed = false
       for (const k of Object.keys(m)) if (k === p || k.startsWith(p + '/')) { delete m[k]; changed = true }
       if (changed) await saveMap(m)
+      const vm = await loadVer()
+      let vch = false
+      for (const k of Object.keys(vm)) if (k === p || k.startsWith(p + '/')) { delete vm[k]; vch = true }
+      if (vch) await saveVer(vm)
     },
     async move(from, to) {
       const a = normalize(from), b = normalize(to)
@@ -104,10 +131,8 @@ export function nodeFs(root: string): VFS {
         if (await fs.stat(real(b)).then(() => true, () => false)) throw alreadyExists(b)
         await fs.rename(real(a), real(b))
       })
-      const m = await loadMap()
-      let changed = false
-      for (const k of Object.keys(m)) if (k === a || k.startsWith(a + '/')) { m[b + k.slice(a.length)] = m[k]; delete m[k]; changed = true }
-      if (changed) await saveMap(m)
+      const m = await loadMap(); if (rekey(m, a, b, false)) await saveMap(m)
+      const vm = await loadVer(); if (rekey(vm, a, b, false)) await saveVer(vm)
     },
     async copy(from, to) {
       const a = normalize(from), b = normalize(to)
@@ -116,10 +141,8 @@ export function nodeFs(root: string): VFS {
         if (await fs.stat(real(b)).then(() => true, () => false)) throw alreadyExists(b)
         await fs.cp(real(a), real(b), { recursive: true })
       })
-      const m = await loadMap()
-      let changed = false
-      for (const k of Object.keys(m)) if (k === a || k.startsWith(a + '/')) { m[b + k.slice(a.length)] = m[k]; changed = true }
-      if (changed) await saveMap(m)
+      const m = await loadMap(); if (rekey(m, a, b, true)) await saveMap(m)
+      const vm = await loadVer(); if (rekey(vm, a, b, true)) await saveVer(vm)
     },
     async getMeta(path) {
       const p = normalize(path)

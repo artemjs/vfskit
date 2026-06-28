@@ -8,6 +8,7 @@ export interface Stat {
   mtime: number
   ctime: number
   meta: Meta
+  version?: string
 }
 
 export interface Entry {
@@ -17,7 +18,7 @@ export interface Entry {
 }
 
 export interface ReadOpts { signal?: AbortSignal }
-export interface WriteOpts { meta?: Meta; signal?: AbortSignal }
+export interface WriteOpts { meta?: Meta; signal?: AbortSignal; ifMatch?: string; ifAbsent?: boolean }
 export interface ListOpts { recursive?: boolean }
 export interface MkdirOpts { recursive?: boolean }
 export interface RemoveOpts { recursive?: boolean }
@@ -28,6 +29,7 @@ export interface Capabilities {
   atomicMove: boolean
   nativeMeta: boolean
   randomAccess: boolean
+  conditionalWrite: boolean
 }
 
 export interface WatchEvent { type: 'create' | 'update' | 'remove'; path: string }

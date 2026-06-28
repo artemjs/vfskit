@@ -14,7 +14,7 @@ export interface Kv {
 
 interface Node { type: 'file' | 'dir'; data: string; meta: Meta }
 
-const caps: Capabilities = { streaming: false, watch: false, atomicMove: false, nativeMeta: true, randomAccess: false }
+const caps: Capabilities = { streaming: false, watch: false, atomicMove: false, nativeMeta: true, randomAccess: false, conditionalWrite: false }
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u))
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
 

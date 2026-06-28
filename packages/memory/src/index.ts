@@ -3,17 +3,19 @@ import {
   type ListOpts, type MkdirOpts, type RemoveOpts, type WriteOpts,
   type WatchCb, type WatchEvent, type Unsubscribe,
   normalize, dirname, toBytes,
-  notFound, alreadyExists, notADirectory, isADirectory, io,
+  notFound, alreadyExists, notADirectory, isADirectory, io, conflict,
 } from '@vfskit/core'
 
-type FileNode = { type: 'file'; data: Uint8Array; meta: Meta; mtime: number; ctime: number }
+type FileNode = { type: 'file'; data: Uint8Array; meta: Meta; mtime: number; ctime: number; version: string }
 type DirNode = { type: 'dir'; meta: Meta; mtime: number; ctime: number }
 type Node = FileNode | DirNode
 
-const caps: Capabilities = { streaming: false, watch: true, atomicMove: true, nativeMeta: true, randomAccess: false }
+const caps: Capabilities = { streaming: false, watch: true, atomicMove: true, nativeMeta: true, randomAccess: false, conditionalWrite: true }
 
 export function memory(): VFS {
   const t = () => Date.now()
+  let seq = 0
+  const ver = () => String(++seq)
   const nodes = new Map<string, Node>([['/', { type: 'dir', meta: {}, mtime: t(), ctime: t() }]])
   const watchers = new Set<{ base: string; cb: WatchCb }>()
 
@@ -46,6 +48,8 @@ export function memory(): VFS {
       parentDir(p)
       const prev = nodes.get(p)
       if (prev && prev.type === 'dir') throw isADirectory(p)
+      if (opts?.ifAbsent && prev) throw alreadyExists(p)
+      if (opts?.ifMatch !== undefined && (prev as FileNode | undefined)?.version !== opts.ifMatch) throw conflict(p)
       const ctime = prev ? prev.ctime : t()
       nodes.set(p, {
         type: 'file',
@@ -53,6 +57,7 @@ export function memory(): VFS {
         meta: opts?.meta ? { ...opts.meta } : ((prev as FileNode | undefined)?.meta ?? {}),
         ctime,
         mtime: t(),
+        version: ver(),
       })
       emit(prev ? 'update' : 'create', p)
     },
@@ -71,7 +76,7 @@ export function memory(): VFS {
     async stat(path) {
       const p = normalize(path)
       const n = need(p)
-      return { type: n.type, size: n.type === 'file' ? n.data.length : 0, mtime: n.mtime, ctime: n.ctime, meta: { ...n.meta } }
+      return { type: n.type, size: n.type === 'file' ? n.data.length : 0, mtime: n.mtime, ctime: n.ctime, meta: { ...n.meta }, version: n.type === 'file' ? n.version : undefined }
     },
     async exists(path) {
       return nodes.has(normalize(path))
@@ -129,7 +134,7 @@ export function memory(): VFS {
         nodes.set(
           b + k.slice(a.length),
           node.type === 'file'
-            ? { type: 'file', data: node.data.slice(), meta: { ...node.meta }, mtime: node.mtime, ctime: node.ctime }
+            ? { type: 'file', data: node.data.slice(), meta: { ...node.meta }, mtime: node.mtime, ctime: node.ctime, version: ver() }
             : { type: 'dir', meta: { ...node.meta }, mtime: node.mtime, ctime: node.ctime },
         )
       }

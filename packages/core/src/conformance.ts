@@ -80,6 +80,16 @@ export const conformanceCases: ConformanceCase[] = [
   { name: 'throws ALREADY_EXISTS moving or copying onto an existing path', async run(make) {
     const fs = make(); await fs.write('/a', '1'); await fs.write('/b', '2')
     await code(() => fs.move('/a', '/b'), 'ALREADY_EXISTS'); await code(() => fs.copy('/a', '/b'), 'ALREADY_EXISTS') } },
+  { name: 'conditional write succeeds on matching version and CONFLICTs on stale (when capable)', async run(make) {
+    const fs = make(); if (!fs.capabilities().conditionalWrite) return
+    await fs.write('/a', '1'); const v = (await fs.stat('/a')).version
+    ok(typeof v === 'string' && v.length > 0, 'expected a version token')
+    await fs.write('/a', '2', { ifMatch: v }); eq(toText(await fs.read('/a')), '2')
+    await code(() => fs.write('/a', '3', { ifMatch: v }), 'CONFLICT'); eq(toText(await fs.read('/a')), '2') } },
+  { name: 'ifAbsent rejects overwriting an existing file (when capable)', async run(make) {
+    const fs = make(); if (!fs.capabilities().conditionalWrite) return
+    await fs.write('/a', '1'); await code(() => fs.write('/a', '2', { ifAbsent: true }), 'ALREADY_EXISTS')
+    eq(toText(await fs.read('/a')), '1') } },
 ]
 
 export function runConformance(make: () => VFS): void {

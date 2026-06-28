@@ -3,29 +3,30 @@ import {
   type ListOpts, type MkdirOpts, type RemoveOpts, type WriteOpts,
   type Unsubscribe,
   normalize, dirname, toBytes,
-  notFound, alreadyExists, isADirectory, notADirectory, io,
+  notFound, alreadyExists, isADirectory, notADirectory, io, conflict,
 } from '@vfskit/core'
 
-export interface S3Object { body: Uint8Array; meta: Meta; size: number; mtime: number }
+export interface S3Object { body: Uint8Array; meta: Meta; size: number; mtime: number; version: string }
 export interface S3Like {
   get(key: string): Promise<S3Object | null>
   put(key: string, body: Uint8Array, meta: Meta): Promise<void>
   del(key: string): Promise<void>
-  head(key: string): Promise<{ size: number; mtime: number; meta: Meta } | null>
+  head(key: string): Promise<{ size: number; mtime: number; meta: Meta; version: string } | null>
   list(prefix: string): Promise<{ key: string; size: number; mtime: number }[]>
 }
 export interface S3Opts { client: S3Like; prefix?: string; pollMs?: number }
 
-const caps: Capabilities = { streaming: false, watch: true, atomicMove: false, nativeMeta: true, randomAccess: false }
+const caps: Capabilities = { streaming: false, watch: true, atomicMove: false, nativeMeta: true, randomAccess: false, conditionalWrite: true }
 const EMPTY = new Uint8Array(0)
 
 export function memoryS3(): S3Like {
-  const m = new Map<string, { body: Uint8Array; meta: Meta; mtime: number }>()
+  const m = new Map<string, { body: Uint8Array; meta: Meta; mtime: number; version: string }>()
+  let seq = 0
   return {
-    async get(k) { const o = m.get(k); return o ? { body: o.body.slice(), meta: { ...o.meta }, size: o.body.length, mtime: o.mtime } : null },
-    async put(k, body, meta) { m.set(k, { body: body.slice(), meta: { ...meta }, mtime: Date.now() }) },
+    async get(k) { const o = m.get(k); return o ? { body: o.body.slice(), meta: { ...o.meta }, size: o.body.length, mtime: o.mtime, version: o.version } : null },
+    async put(k, body, meta) { m.set(k, { body: body.slice(), meta: { ...meta }, mtime: Date.now(), version: String(++seq) }) },
     async del(k) { m.delete(k) },
-    async head(k) { const o = m.get(k); return o ? { size: o.body.length, mtime: o.mtime, meta: { ...o.meta } } : null },
+    async head(k) { const o = m.get(k); return o ? { size: o.body.length, mtime: o.mtime, meta: { ...o.meta }, version: o.version } : null },
     async list(prefix) {
       const out: { key: string; size: number; mtime: number }[] = []
       for (const [k, o] of m) if (k.startsWith(prefix)) out.push({ key: k, size: o.body.length, mtime: o.mtime })
@@ -67,8 +68,10 @@ export function s3(opts: S3Opts): VFS {
       const p = normalize(path)
       if ((await kind(p)) === 'dir') throw isADirectory(p)
       await needDirParent(p)
-      const meta = wopts?.meta ?? (await c.head(key(p)))?.meta ?? {}
-      await c.put(key(p), toBytes(data), meta)
+      const h = await c.head(key(p))
+      if (wopts?.ifAbsent && h) throw alreadyExists(p)
+      if (wopts?.ifMatch !== undefined && (h?.version ?? '') !== wopts.ifMatch) throw conflict(p)
+      await c.put(key(p), toBytes(data), wopts?.meta ?? h?.meta ?? {})
     },
     async list(path, lopts?: ListOpts) {
       const p = normalize(path)
@@ -101,7 +104,7 @@ export function s3(opts: S3Opts): VFS {
       if (k === null) throw notFound(p)
       if (k === 'file') {
         const h = await c.head(key(p))
-        return { type: 'file', size: h?.size ?? 0, mtime: h?.mtime ?? 0, ctime: h?.mtime ?? 0, meta: h?.meta ?? {} }
+        return { type: 'file', size: h?.size ?? 0, mtime: h?.mtime ?? 0, ctime: h?.mtime ?? 0, meta: h?.meta ?? {}, version: h?.version }
       }
       const h = await c.head(marker(p))
       return { type: 'dir', size: 0, mtime: h?.mtime ?? 0, ctime: h?.mtime ?? 0, meta: h?.meta ?? {} }

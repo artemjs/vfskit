@@ -5,6 +5,7 @@ export type ErrorCode =
   | 'IS_A_DIRECTORY'
   | 'PERMISSION_DENIED'
   | 'UNSUPPORTED'
+  | 'CONFLICT'
   | 'IO'
 
 export const BRAND: unique symbol = Symbol.for('vfskit.VfsError')
@@ -27,6 +28,7 @@ export const notADirectory = (p: string) => new VfsError('NOT_A_DIRECTORY', `not
 export const isADirectory = (p: string) => new VfsError('IS_A_DIRECTORY', `is a directory: ${p}`, p)
 export const permissionDenied = (p: string) => new VfsError('PERMISSION_DENIED', `permission denied: ${p}`, p)
 export const unsupported = (op: string) => new VfsError('UNSUPPORTED', `unsupported: ${op}`)
+export const conflict = (p: string) => new VfsError('CONFLICT', `version conflict: ${p}`, p)
 export const io = (message: string, path?: string) => new VfsError('IO', message, path)
 
 export function isVfsError(e: unknown): e is VfsError {

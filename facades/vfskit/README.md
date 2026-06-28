@@ -142,6 +142,20 @@ const fs = cache(remote(wsTransport(url)), { ttlMs: 5000 })
 
 Pass your own `store` to back the cache with anything (e.g. `localStorage`).
 
+## Concurrent writes
+
+Adapters that report `conditionalWrite` give every file an opaque `version` token (via
+`stat`). Pass it back as `ifMatch` to make a write succeed only if nobody changed the file in
+between - otherwise it fails with a typed `CONFLICT`. `ifAbsent` makes a create-only write.
+
+```ts
+const { version } = await fs.stat('/doc')
+await fs.write('/doc', next, { ifMatch: version })   // CONFLICT if it moved on
+await fs.write('/new', data, { ifAbsent: true })     // ALREADY_EXISTS if it exists
+```
+
+Supported by `memory`, `nodeFs`, `s3`, and transparently over `remote(...)`.
+
 ## Transports
 
 - `httpTransport(url)` - request/response; works on serverless/edge. No `watch`.

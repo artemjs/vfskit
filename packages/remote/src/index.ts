@@ -13,7 +13,7 @@ export interface RemoteOpts { transport: Transport; capabilities?: Capabilities 
 export function remote(opts: Transport | RemoteOpts): VFS {
   const t: Transport = (opts as Transport).request ? (opts as Transport) : (opts as RemoteOpts).transport
   const caps: Capabilities = (opts as RemoteOpts).capabilities
-    ?? { streaming: false, watch: !!t.watch, atomicMove: false, nativeMeta: true, randomAccess: false }
+    ?? { streaming: false, watch: !!t.watch, atomicMove: false, nativeMeta: true, randomAccess: false, conditionalWrite: true }
   const call = async (method: string, path: string, args?: unknown[], data?: Uint8Array): Promise<DecodedReply> => {
     const a = args ? [...args] : []
     while (a.length && a[a.length - 1] === undefined) a.pop()
