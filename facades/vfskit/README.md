@@ -5,7 +5,7 @@
 <h1 align="center">vfskit</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.0-7c8cff?style=flat-square" alt="version">
+  <img src="https://img.shields.io/badge/version-1.2.1-7c8cff?style=flat-square" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-56e6c4?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square" alt="typescript">
   <img src="https://img.shields.io/badge/module-ESM-f0db4f?style=flat-square" alt="esm">

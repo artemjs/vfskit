@@ -116,7 +116,9 @@ export function opfs(root?: DirH): VFS {
       if (k === null) throw notFound(a)
       if ((await kind(b)) !== null) throw alreadyExists(b)
       if (b === a || b.startsWith(a + '/')) throw io('cannot copy into itself', b)
-      if (await parent(b).catch(() => null) === null) throw notFound(dirname(b))
+      const pk = await kind(dirname(b))
+      if (pk === null) throw notFound(dirname(b))
+      if (pk !== 'dir') throw notADirectory(dirname(b))
       const m = await loadMap(); let changed = false
       const rec = async (src: string, dst: string) => {
         if ((await kind(src)) === 'file') {

@@ -118,6 +118,7 @@ export function memory(): VFS {
       for (const k of [...nodes.keys()].filter((k) => k === a || within(a, k))) {
         const node = nodes.get(k)!
         nodes.delete(k)
+        if (node.type === 'file') node.version = ver()
         nodes.set(b + k.slice(a.length), node)
       }
       emit('remove', a)
@@ -129,6 +130,7 @@ export function memory(): VFS {
       need(a)
       parentDir(b)
       if (nodes.has(b)) throw alreadyExists(b)
+      if (within(a, b)) throw io('cannot copy into itself', b)
       for (const k of [...nodes.keys()].filter((k) => k === a || within(a, k))) {
         const node = nodes.get(k)!
         nodes.set(

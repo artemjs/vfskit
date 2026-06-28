@@ -1,6 +1,6 @@
 {
   "name": "@artemjs/vfskit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Universal abstraction over any virtual file system - memory, disk, S3 and more - with composable adapters, encryption and a remote bridge. Backend kit.",
   "keywords": [
     "vfs",

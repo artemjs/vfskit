@@ -131,7 +131,8 @@ export function nodeFs(root: string): VFS {
         await fs.rename(real(a), real(b))
       })
       const m = await loadMap(); if (rekey(m, a, b, false)) await saveMap(m)
-      const vm = await loadVer(); if (rekey(vm, a, b, false)) await saveVer(vm)
+      const vm = await loadVer()
+      if (rekey(vm, a, b, false)) { for (const k of Object.keys(vm)) if (k === b || k.startsWith(b + '/')) vm[k] = (vm[k] ?? 0) + 1; await saveVer(vm) }
     },
     async copy(from, to) {
       const a = normalize(from), b = normalize(to)

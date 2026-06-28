@@ -91,6 +91,18 @@ export const conformanceCases: ConformanceCase[] = [
     const fs = make(); if (!fs.capabilities().conditionalWrite) return
     await fs.write('/a', '1'); await code(() => fs.write('/a', '2', { ifAbsent: true }), 'ALREADY_EXISTS')
     eq(toText(await fs.read('/a')), '1') } },
+  { name: 'rejects copy or move into its own subtree', async run(make) {
+    const fs = make(); await fs.mkdir('/d'); await fs.write('/d/a', '1')
+    await code(() => fs.copy('/d', '/d/x'), 'IO')
+    await code(() => fs.move('/d', '/d/x'), 'IO') } },
+  { name: 'throws NOT_A_DIRECTORY copying under a file', async run(make) {
+    const fs = make(); await fs.write('/f', '1'); await fs.write('/src', '2')
+    await code(() => fs.copy('/src', '/f/x'), 'NOT_A_DIRECTORY') } },
+  { name: 'changes the version token on move (when capable)', async run(make) {
+    const fs = make(); if (!fs.capabilities().conditionalWrite) return
+    await fs.write('/a', '1'); const v = (await fs.stat('/a')).version
+    await fs.move('/a', '/b'); const v2 = (await fs.stat('/b')).version
+    ok(typeof v2 === 'string' && v2.length > 0 && v2 !== v, 'expected a new version after move') } },
   { name: 'streams content in and back out (helper, native or buffered)', async run(make) {
     const fs = make()
     const ws = await writeStream(fs, '/s.bin'); const w = ws.getWriter()
