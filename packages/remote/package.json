@@ -1,0 +1,13 @@
+{
+  "name": "@vfskit/remote",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@vfskit/core": "0.0.0", "@vfskit/rpc": "0.0.0" },
+  "devDependencies": {
+    "@vfskit/memory": "0.0.0",
+    "@vfskit/server": "0.0.0",
+    "@vfskit/transport-http": "0.0.0",
+    "@vfskit/transport-ws": "0.0.0"
+  }
+}
