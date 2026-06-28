@@ -101,6 +101,7 @@ export function nodeFs(root: string): VFS {
       const a = normalize(from), b = normalize(to)
       await wrap(a, async () => {
         await fs.access(pdirname(real(b)))
+        if (await fs.stat(real(b)).then(() => true, () => false)) throw alreadyExists(b)
         await fs.rename(real(a), real(b))
       })
       const m = await loadMap()
@@ -112,6 +113,7 @@ export function nodeFs(root: string): VFS {
       const a = normalize(from), b = normalize(to)
       await wrap(a, async () => {
         await fs.access(pdirname(real(b)))
+        if (await fs.stat(real(b)).then(() => true, () => false)) throw alreadyExists(b)
         await fs.cp(real(a), real(b), { recursive: true })
       })
       const m = await loadMap()

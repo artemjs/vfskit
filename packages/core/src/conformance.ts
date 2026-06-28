@@ -135,5 +135,18 @@ export function runConformance(make: () => VFS): void {
       try { await fs.mkdir('/d') } catch (e) { err = e }
       expect(isVfsError(err) && err.code).toBe('ALREADY_EXISTS')
     })
+    it('preserves metadata when overwriting content without new meta', async () => {
+      const fs = make()
+      await fs.write('/a', '1', { meta: { tag: 'x' } })
+      await fs.write('/a', '2')
+      expect((await fs.getMeta('/a')).tag).toBe('x')
+    })
+    it('throws NOT_A_DIRECTORY creating a directory under a file', async () => {
+      const fs = make()
+      await fs.write('/f', '1')
+      let err: unknown
+      try { await fs.mkdir('/f/sub', { recursive: true }) } catch (e) { err = e }
+      expect(isVfsError(err) && err.code).toBe('NOT_A_DIRECTORY')
+    })
   })
 }

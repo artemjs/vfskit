@@ -40,6 +40,7 @@ export function s3(opts: S3Opts): VFS {
   const key = (p: string) => { const n = normalize(p).slice(1); return base ? (n ? base + '/' + n : base) : n }
   const marker = (p: string) => key(p) + '/'
   const prefixOf = (p: string) => { const k = key(p); return k ? k + '/' : '' }
+  const within = (a: string, b: string) => b === a || b.startsWith(a === '/' ? '/' : a + '/')
 
   const kind = async (p: string): Promise<'file' | 'dir' | null> => {
     if (normalize(p) === '/') return 'dir'
@@ -66,7 +67,8 @@ export function s3(opts: S3Opts): VFS {
       const p = normalize(path)
       if ((await kind(p)) === 'dir') throw isADirectory(p)
       await needDirParent(p)
-      await c.put(key(p), toBytes(data), wopts?.meta ?? {})
+      const meta = wopts?.meta ?? (await c.head(key(p)))?.meta ?? {}
+      await c.put(key(p), toBytes(data), meta)
     },
     async list(path, lopts?: ListOpts) {
       const p = normalize(path)
@@ -116,7 +118,12 @@ export function s3(opts: S3Opts): VFS {
       if (mopts?.recursive) {
         const segs = p.split('/').filter(Boolean)
         let cur = ''
-        for (const s of segs) { cur += '/' + s; if ((await kind(cur)) === null) await c.put(marker(cur), EMPTY, {}) }
+        for (const s of segs) {
+          cur += '/' + s
+          const k = await kind(cur)
+          if (k === 'file') throw notADirectory(cur)
+          if (k === null) await c.put(marker(cur), EMPTY, {})
+        }
         return
       }
       await needDirParent(p)
@@ -135,6 +142,7 @@ export function s3(opts: S3Opts): VFS {
     },
     async copy(from, to) {
       const a = normalize(from), b = normalize(to)
+      if (within(a, b)) throw io('cannot copy into itself', b)
       const k = await kind(a)
       if (k === null) throw notFound(a)
       if ((await kind(b)) !== null) throw alreadyExists(b)
