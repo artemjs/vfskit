@@ -2,12 +2,16 @@
   "name": "vfskit-monorepo",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "facades/*"],
+  "workspaces": [
+    "packages/*",
+    "facades/*"
+  ],
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@types/node": "^26.0.1",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
