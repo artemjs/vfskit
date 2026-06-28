@@ -1,6 +1,6 @@
 {
   "name": "@artemjs/vfskit",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Universal abstraction over any virtual file system - memory, disk, S3 and more - with composable adapters, encryption and a remote bridge. Backend kit.",
   "keywords": [
     "vfs",
@@ -55,7 +55,9 @@
     "@vfskit/transport-http": "*",
     "@vfskit/transport-ws": "*",
     "tsup": "^8.3.0",
-    "@vfskit/cache": "*"
+    "@vfskit/cache": "*",
+    "@vfskit/kv": "*",
+    "@vfskit/sqlite": "*"
   },
   "publishConfig": {
     "access": "public"

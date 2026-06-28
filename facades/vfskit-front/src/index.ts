@@ -1,5 +1,7 @@
 export * from '@vfskit/core'
 export { memory } from '@vfskit/memory'
+export { opfs } from '@vfskit/opfs'
+export { kv, memKv, localStorageKv, type KvStore, type KvOpts } from '@vfskit/kv'
 export { encrypt, type EncryptOpts } from '@vfskit/encrypt'
 export { cache, type CacheOpts, type CacheStore } from '@vfskit/cache'
 export { remote, type Transport, type RemoteOpts } from '@vfskit/remote'

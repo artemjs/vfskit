@@ -5,7 +5,7 @@
 <h1 align="center">vfskit</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-7c8cff?style=flat-square" alt="version">
+  <img src="https://img.shields.io/badge/version-1.2.0-7c8cff?style=flat-square" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-56e6c4?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square" alt="typescript">
   <img src="https://img.shields.io/badge/module-ESM-f0db4f?style=flat-square" alt="esm">
@@ -105,8 +105,22 @@ await fs.write('/hello.txt', 'hi')
 | `memory()` | anywhere | native | reference implementation; synchronous `watch` |
 | `nodeFs(dir)` | Node | sidecar `.vfskit/meta.json` | rooted at `dir`; native streaming; `watch` via `fs.watch` |
 | `s3({ client, prefix?, pollMs? })` | Node | native object metadata | inject any `S3Like` client; POSIX dirs emulated with markers; `watch` by polling |
+| `sqlite(file)` | Node | native column | whole VFS in one SQLite file via built-in `node:sqlite`; conditional writes |
+| `opfs(root?)` | browser | sidecar manifest | persistent Origin Private File System; native file streaming |
+| `kv({ store, prefix? })` | anywhere | native record | over any async key-value store; ships `memKv()` and `localStorageKv()` |
 
 Every adapter passes the same conformance suite, so a new one "just works" once it does too.
+
+```ts
+// browser-persistent storage, no server
+import { opfs, kv, localStorageKv } from '@artemjs/vfskit-front'
+const disk = opfs()                          // Origin Private File System
+const ls = kv({ store: localStorageKv() })   // or back any KV: Redis, Cloudflare KV, Deno KV
+
+// node: a whole file system in one .db
+import { sqlite } from '@artemjs/vfskit'
+const db = sqlite('./app.db')
+```
 
 ## Bring your own storage
 

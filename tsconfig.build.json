@@ -33,6 +33,15 @@
     },
     {
       "path": "packages/transport-ws/tsconfig.build.json"
+    },
+    {
+      "path": "packages/kv/tsconfig.build.json"
+    },
+    {
+      "path": "packages/sqlite/tsconfig.build.json"
+    },
+    {
+      "path": "packages/opfs/tsconfig.build.json"
     }
   ]
 }
