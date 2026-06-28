@@ -50,7 +50,7 @@ export function memory(): VFS {
       nodes.set(p, {
         type: 'file',
         data: toBytes(data).slice(),
-        meta: opts?.meta ?? (prev as FileNode | undefined)?.meta ?? {},
+        meta: opts?.meta ? { ...opts.meta } : ((prev as FileNode | undefined)?.meta ?? {}),
         ctime,
         mtime: t(),
       })
