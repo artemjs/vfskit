@@ -60,16 +60,14 @@ export function nodeFs(root: string): VFS {
     },
     async write(path, data, opts?: WriteOpts) {
       const p = normalize(path)
+      await wrap(p, () => fs.access(pdirname(real(p))).then(() => {}))
       const vmap = await loadVer()
       if (opts?.ifAbsent || opts?.ifMatch !== undefined) {
         const existed = await fs.stat(real(p)).then(() => true, () => false)
         if (opts.ifAbsent && existed) throw alreadyExists(p)
         if (opts.ifMatch !== undefined && String(vmap[p] ?? '') !== opts.ifMatch) throw conflict(p)
       }
-      await wrap(p, async () => {
-        await fs.access(pdirname(real(p)))
-        await fs.writeFile(real(p), toBytes(data))
-      })
+      await wrap(p, () => fs.writeFile(real(p), toBytes(data)).then(() => {}))
       vmap[p] = (vmap[p] ?? 0) + 1
       await saveVer(vmap)
       if (opts?.meta) { const m = await loadMap(); m[p] = opts.meta; await saveMap(m) }
@@ -181,7 +179,7 @@ export function nodeFs(root: string): VFS {
       const p = normalize(path)
       const fh = await wrap(p, async () => { await fs.access(pdirname(real(p))); return fs.open(real(p), 'w') })
       return new WritableStream<Uint8Array>({
-        async write(chunk) { await fh.write(chunk) },
+        async write(chunk) { try { await fh.write(chunk) } catch (e) { await fh.close().catch(() => {}); throw e } },
         close: async () => {
           await fh.close()
           const vmap = await loadVer(); vmap[p] = (vmap[p] ?? 0) + 1; await saveVer(vmap)

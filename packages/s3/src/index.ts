@@ -6,12 +6,12 @@ import {
   notFound, alreadyExists, isADirectory, notADirectory, io, conflict,
 } from '@vfskit/core'
 
-export interface S3Object { body: Uint8Array; meta: Meta; size: number; mtime: number; version: string }
+export interface S3Object { body: Uint8Array; meta: Meta; size: number; mtime: number; version?: string }
 export interface S3Like {
   get(key: string): Promise<S3Object | null>
   put(key: string, body: Uint8Array, meta: Meta): Promise<void>
   del(key: string): Promise<void>
-  head(key: string): Promise<{ size: number; mtime: number; meta: Meta; version: string } | null>
+  head(key: string): Promise<{ size: number; mtime: number; meta: Meta; version?: string } | null>
   list(prefix: string): Promise<{ key: string; size: number; mtime: number }[]>
 }
 export interface S3Opts { client: S3Like; prefix?: string; pollMs?: number }
