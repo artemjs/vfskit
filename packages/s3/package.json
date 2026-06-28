@@ -1,0 +1,7 @@
+{
+  "name": "@vfskit/s3",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@vfskit/core": "0.0.0" }
+}
