@@ -1,0 +1,9 @@
+{
+  "name": "@vfskit/core",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./conformance": "./src/conformance.ts"
+  }
+}
