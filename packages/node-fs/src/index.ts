@@ -1,4 +1,5 @@
-import { promises as fs, watch as fsWatch, type FSWatcher } from 'node:fs'
+import { promises as fs, watch as fsWatch, createReadStream, type FSWatcher } from 'node:fs'
+import { Readable } from 'node:stream'
 import { join as pjoin, dirname as pdirname } from 'node:path'
 import {
   type VFS, type Entry, type Meta, type Capabilities,
@@ -8,7 +9,7 @@ import {
   notFound, alreadyExists, isADirectory, notADirectory, io, conflict, VfsError,
 } from '@vfskit/core'
 
-const caps: Capabilities = { streaming: false, watch: true, atomicMove: true, nativeMeta: false, randomAccess: false, conditionalWrite: true }
+const caps: Capabilities = { streaming: true, watch: true, atomicMove: true, nativeMeta: false, randomAccess: false, conditionalWrite: true }
 const META = '/.vfskit/meta.json'
 const VER = '/.vfskit/ver.json'
 
@@ -169,6 +170,25 @@ export function nodeFs(root: string): VFS {
       try { w = fsWatch(real(p), { recursive: true }, on) }
       catch { try { w = fsWatch(real(p), on) } catch { return () => {} } }
       return () => w.close()
+    },
+    async readStream(path, ropts) {
+      const p = normalize(path)
+      await wrap(p, async () => { if ((await fs.stat(real(p))).isDirectory()) throw isADirectory(p) })
+      const rs = createReadStream(real(p), ropts?.signal ? { signal: ropts.signal } : {})
+      return Readable.toWeb(rs) as unknown as ReadableStream<Uint8Array>
+    },
+    async writeStream(path, wopts) {
+      const p = normalize(path)
+      const fh = await wrap(p, async () => { await fs.access(pdirname(real(p))); return fs.open(real(p), 'w') })
+      return new WritableStream<Uint8Array>({
+        async write(chunk) { await fh.write(chunk) },
+        close: async () => {
+          await fh.close()
+          const vmap = await loadVer(); vmap[p] = (vmap[p] ?? 0) + 1; await saveVer(vmap)
+          if (wopts?.meta) { const m = await loadMap(); m[p] = wopts.meta; await saveMap(m) }
+        },
+        abort: async () => { await fh.close() },
+      })
     },
   }
 }

@@ -1,6 +1,7 @@
 import type { VFS } from './types'
-import { toText } from './bytes'
+import { toText, toBytes } from './bytes'
 import { isVfsError } from './errors'
+import { readStream, writeStream, collect } from './stream'
 
 function fail(m: string): never { throw new Error('conformance: ' + m) }
 function ok(v: unknown, m = 'expected truthy') { if (!v) fail(m) }
@@ -90,6 +91,12 @@ export const conformanceCases: ConformanceCase[] = [
     const fs = make(); if (!fs.capabilities().conditionalWrite) return
     await fs.write('/a', '1'); await code(() => fs.write('/a', '2', { ifAbsent: true }), 'ALREADY_EXISTS')
     eq(toText(await fs.read('/a')), '1') } },
+  { name: 'streams content in and back out (helper, native or buffered)', async run(make) {
+    const fs = make()
+    const ws = await writeStream(fs, '/s.bin'); const w = ws.getWriter()
+    await w.write(toBytes('chunk-one;')); await w.write(toBytes('chunk-two')); await w.close()
+    eq(toText(await collect(await readStream(fs, '/s.bin'))), 'chunk-one;chunk-two')
+    eq(toText(await fs.read('/s.bin')), 'chunk-one;chunk-two') } },
 ]
 
 export function runConformance(make: () => VFS): void {

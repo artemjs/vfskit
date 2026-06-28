@@ -156,6 +156,23 @@ await fs.write('/new', data, { ifAbsent: true })     // ALREADY_EXISTS if it exi
 
 Supported by `memory`, `nodeFs`, `s3`, and transparently over `remote(...)`.
 
+## Streaming
+
+`readStream(vfs, path)` and `writeStream(vfs, path)` give Web `ReadableStream` /
+`WritableStream` over any adapter - native where the adapter supports it (`nodeFs` streams
+real file handles), buffered otherwise, so the API is uniform:
+
+```ts
+import { readStream, writeStream, collect } from 'vfskit'
+
+const w = (await writeStream(fs, '/big.log')).getWriter()
+await w.write(toBytes('line 1\n')); await w.close()
+const all = await collect(await readStream(fs, '/big.log'))
+```
+
+`encrypt` and `cache` buffer through their own `read`/`write`, so streaming stays correct
+behind them (the stream still yields plaintext; the disk still holds ciphertext).
+
 ## Transports
 
 - `httpTransport(url)` - request/response; works on serverless/edge. No `watch`.

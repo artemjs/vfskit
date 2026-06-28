@@ -30,6 +30,8 @@ export function encrypt(inner: VFS, opts: EncryptOpts): VFS {
   const caps: Capabilities = { ...inner.capabilities(), streaming: false, randomAccess: false }
   return {
     ...inner,
+    readStream: undefined,
+    writeStream: undefined,
     capabilities: () => caps,
     async stat(path) {
       const s = await inner.stat(path)

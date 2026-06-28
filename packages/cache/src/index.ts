@@ -18,6 +18,8 @@ export function cache(inner: VFS, opts: CacheOpts = {}): VFS {
 
   return {
     ...inner,
+    readStream: undefined,
+    writeStream: undefined,
     async read(path, ropts) {
       const p = normalize(path)
       const hit = store.get(p)

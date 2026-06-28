@@ -50,4 +50,6 @@ export interface VFS {
   setMeta(path: string, meta: Meta): Promise<void>
   watch(path: string, cb: WatchCb): Unsubscribe
   capabilities(): Capabilities
+  readStream?(path: string, opts?: ReadOpts): Promise<ReadableStream<Uint8Array>>
+  writeStream?(path: string, opts?: WriteOpts): Promise<WritableStream<Uint8Array>>
 }
