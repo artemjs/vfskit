@@ -10,8 +10,9 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": ["dist", "README.md"],
-  "repository": { "type": "git", "url": "git+https://github.com/vfskit/vfskit.git" },
-  "homepage": "https://github.com/vfskit/vfskit#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/artemjs/vfskit.git", "directory": "facades/vfskit" },
+  "bugs": "https://github.com/artemjs/vfskit/issues",
+  "homepage": "https://github.com/artemjs/vfskit#readme",
   "scripts": { "build": "tsup" },
   "devDependencies": {
     "@vfskit/core": "*",
