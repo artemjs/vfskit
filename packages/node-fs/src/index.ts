@@ -5,7 +5,7 @@ import {
   type ListOpts, type MkdirOpts, type RemoveOpts, type WriteOpts,
   type Unsubscribe,
   normalize, toBytes,
-  notFound, alreadyExists, isADirectory, notADirectory, io,
+  notFound, alreadyExists, isADirectory, notADirectory, io, VfsError,
 } from '@vfskit/core'
 
 const caps: Capabilities = { streaming: false, watch: false, atomicMove: true, nativeMeta: false, randomAccess: false }
@@ -25,6 +25,7 @@ export function nodeFs(root: string): VFS {
   const wrap = async <T>(p: string, fn: () => Promise<T>): Promise<T> => {
     try { return await fn() }
     catch (e) {
+      if (e instanceof VfsError) throw e
       const c = (e as { code?: string }).code
       if (c === 'ENOENT') throw notFound(p)
       if (c === 'EEXIST') throw alreadyExists(p)
