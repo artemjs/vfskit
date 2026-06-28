@@ -119,14 +119,19 @@ is considered correct. The suite skips checks for capabilities an adapter doesn'
 ## Encryption
 
 - **Algorithm**: AES-256-GCM via WebCrypto (works on node 18+ and browsers).
-- **Key**: a raw key, or a passphrase derived via PBKDF2.
-- **Per-file**: random IV; an envelope header `magic + iv + tag` is prepended to ciphertext.
-- **Tamper detection**: GCM auth tag fails closed on modification.
+- **Key**: a raw key (imported once), or a passphrase derived via PBKDF2-SHA256 at 210000
+  iterations using a per-file random salt.
+- **Per-file**: random salt and random IV; the envelope `magic(3) + salt(16) + iv(12) +
+  ciphertext+tag` is the stored blob (47 bytes overhead). `stat().size` reports plaintext size.
+- **Tamper detection**: GCM auth tag fails closed; a bad envelope or failed decrypt raises a
+  typed `VfsError('IO')`.
+- **Key handling**: raw-key mode derives once and caches; passphrase mode derives per file
+  from that file's salt (secure but per-op cost — prefer raw-key for high-frequency I/O).
 - **Scope**: content is encrypted by default; filename obfuscation (path → HMAC) is opt-in.
 - **Composition**: as a middleware it wraps any VFS; wrapping `remote(...)` gives E2E so the
   server stores only ciphertext.
 
-Encryption changes capabilities (no random access; streaming is chunk-framed).
+Encryption changes capabilities (no random access; streaming deferred).
 
 ## Bridge protocol
 
